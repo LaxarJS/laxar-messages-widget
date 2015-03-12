@@ -162,16 +162,17 @@ The widget supports the following event patterns as specified by the [LaxarJS Pa
 
 #### Resources
 
-* Resource: resource.list[ i ]
-* Role: Slave
-* Access: Read
-* Description: Resource topic list.
-Empty list serves as catch-all, `null` disables the resource-feature.
+* Resource: `resource.list[ i ]`
+   * Role: Slave
+   * Access: Read
+   * Description: Resource topic list.
+   Empty list serves as catch-all, `null` disables the resource-feature.
+
 
 #### Flags
-* Flag: status.(ERROR|WARNING|INFO|SUCCESS|BLANK).flag
-* Role: Sender
-* Description: Set or unset the status of the widget
+* Flag: `status.(ERROR|WARNING|INFO|SUCCESS|BLANK).flag`
+   * Role: Sender
+   * Description: Set or unset the status of the widget
 
 
 ## References
