@@ -7,7 +7,7 @@ The AxMessagesWidget displays messages to the user, for example to communicate v
 * [Appearance](#appearance)
 * [Usage](#usage)
 * [Features](#features)
-* [Integration](#Integration)
+* [Integration](#integration)
 * [References](#references)
 
 ## Appearance
