@@ -2,6 +2,8 @@
 
 ## Last Changes
 
+## v3.0.0
+
 - [#4](https://github.com/LaxarJS/ax-messages-display-widget/issues/4): Updated to LaxarJS 1.0.0 and updated contribution information
     + **BREAKING CHANGE:** see ticket for details
 - [#3](https://github.com/LaxarJS/ax-messages-display-widget/issues/3): Documentation: Fixed layout in section "Integration"
@@ -12,4 +14,3 @@
 ## v2.0.0
 
 Initial OSS version.
-
