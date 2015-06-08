@@ -2,6 +2,8 @@
 
 ## Last Changes
 
+- [#4](https://github.com/LaxarJS/ax-messages-display-widget/issues/4): Updated to LaxarJS 1.0.0 and updated contribution information
+    + **BREAKING CHANGE:** see ticket for details
 - [#3](https://github.com/LaxarJS/ax-messages-display-widget/issues/3): Documentation: Fixed layout in section "Integration"
 - [#2](https://github.com/LaxarJS/ax-messages-display-widget/issues/2): Documentation: Fixed anchor link to the section "Integration"
 - [#1](https://github.com/LaxarJS/ax-messages-display-widget/issues/1): Deleted AngularJS dependency in `bower.json`

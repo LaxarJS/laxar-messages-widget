@@ -10,6 +10,7 @@
       "$schema": "http://json-schema.org/draft-04/schema#",
       "type": "object",
       "properties": {
+
          "layout": {
             "type": "object",
             "description": "How to present the messages.",
@@ -21,6 +22,7 @@
                }
             }
          },
+
          "dismiss": {
             "type": "object",
             "description": "Tells if and how messages may be dismissed by the user.",
@@ -32,6 +34,7 @@
                }
             }
          },
+
          "status": {
             "type": "object",
             "description": "Flags by which the most severe level among all messages is indicated.",
@@ -68,6 +71,7 @@
                }
             }
          },
+
          "errors": {
             "type": "object",
             "description": "If enabled, errors received via didEncounterError will be displayed too",
@@ -78,6 +82,7 @@
                }
             }
          },
+
          "resource": {
             "type": "object",
             "description": "List of resources for which publish- and validation-messages are processed.",
@@ -104,6 +109,7 @@
                }
             }
          },
+
          "i18n": {
             "description": "Which locale to use for displaying this widget.",
             "type": "object",
