@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v3.0.1
+
 - [#5](https://github.com/LaxarJS/ax-messages-widget/issues/5): Fixed specs to work on angular 1.4.x (as well as 1.3.x)
 
 
