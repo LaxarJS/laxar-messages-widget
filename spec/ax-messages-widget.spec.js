@@ -298,13 +298,13 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'each message receives a visible dismiss button (R2.3)', function() {
-               var hideButton = renderWidget().find( 'button:visible' );
-
-               expect( hideButton.length ).toBe( 2 );
+               var dom = renderWidget();
+               expect( dom.find( '.alert button.close:visible' ).length ).toBe( 2 );
                expect( testBed.scope.model.messagesForView.length ).toBe( 3 );
-               hideButton.eq( 0 ).click();
+               dom.find( '.alert-danger button.close' ).click();
+               testBed.scope.$apply();
                expect( testBed.scope.model.messagesForView.length ).toBe( 2 );
-               hideButton.eq( 1 ).click();
+               dom.find( '.alert-warning button.close' ).click();
                expect( testBed.scope.model.messagesForView.length ).toBe( 0 );
             } );
          } );
