@@ -1,4 +1,4 @@
-# AxMessagesWidget
+# AxMessagesWidget [![Build Status](https://travis-ci.org/LaxarJS/ax-messages-widget.svg?branch=master)](https://travis-ci.org/LaxarJS/ax-messages-widget)
 
 The AxMessagesWidget displays messages to the user, for example to communicate validation results like errors, warnings and hints.
 

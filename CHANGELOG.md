@@ -2,6 +2,8 @@
 
 ## Last Changes
 
+- [#7](https://github.com/LaxarJS/ax-messages-widget/issues/7): Added a `.travis.yml` for open continuous integration
+
 
 ## v3.0.1
 
