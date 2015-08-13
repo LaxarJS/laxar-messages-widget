@@ -2,6 +2,7 @@
 
 ## Last Changes
 
+- [#6](https://github.com/LaxarJS/ax-messages-widget/issues/6): Support AMD references (and installation through bower)
 - [#7](https://github.com/LaxarJS/ax-messages-widget/issues/7): Added a `.travis.yml` for open continuous integration
 - [#5](https://github.com/LaxarJS/ax-messages-widget/issues/5): Fixed specs to work on angular 1.4.x (as well as 1.3.x)
 
