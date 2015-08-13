@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v3.2.0
+
 - [#6](https://github.com/LaxarJS/ax-messages-widget/issues/6): Support AMD references (and installation through bower)
 
 
