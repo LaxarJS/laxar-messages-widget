@@ -1,5 +1,5 @@
 {
-   "name": "AxMessagesWidget",
+   "name": "ax-messages-widget",
    "description": "Displays messages to the user, for example to communicate validation results.",
    "integration": {
       "technology": "angular",

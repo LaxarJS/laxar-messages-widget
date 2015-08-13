@@ -4,6 +4,7 @@
  * http://laxarjs.org/license
  */
 define( [
+   'json!../widget.json',
    '../ax-messages-widget',
    'laxar/laxar_testing',
    'angular-mocks',
@@ -11,10 +12,10 @@ define( [
    './spec_data',
    'text!../default.theme/ax-messages-widget.html',
    'angular-sanitize'
-], function( controller, ax, angularMocks, $, specData, template ) {
+], function( descriptor, controller, ax, angularMocks, $, specData, template ) {
    'use strict';
 
-   describe( 'An AxMessagesWidget', function() {
+   describe( 'An ax-messages-widget', function() {
 
       var ANY_FUNCTION = jasmine.any( Function );
 
@@ -28,7 +29,7 @@ define( [
       beforeEach( function setup() {
          angularMocks.module( 'ngSanitize' );
 
-         testBed = ax.testing.portalMocksAngular.createControllerTestBed( 'laxarjs/ax-messages-widget' );
+         testBed = ax.testing.portalMocksAngular.createControllerTestBed( descriptor );
          testBed.useWidgetJson();
          setupWithFeatures( { resource: { list: [] } } );
 

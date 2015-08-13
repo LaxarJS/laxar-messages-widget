@@ -6,7 +6,7 @@
 ( function( global ) {
    'use strict';
    global.laxarSpec = {
-      title: 'AxMessagesWidget Specification',
+      title: 'ax-messages-widget Specification',
       tests: [
          'ax-messages-widget.spec'
       ],
