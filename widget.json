@@ -110,6 +110,18 @@
             }
          },
 
+         "autoScroll": {
+            "type": "object",
+            "description": "Scroll the messages into the visible area of the window when receiving messages.",
+            "properties": {
+               "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "If true the widget scrolls the messages into the visible area when receiving them."
+               }
+            }
+         },
+
          "i18n": {
             "description": "Which locale to use for displaying this widget.",
             "type": "object",

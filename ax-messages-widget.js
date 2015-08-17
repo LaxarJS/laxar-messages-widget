@@ -11,6 +11,8 @@ define( [
    'use strict';
 
    var DID_ENCOUNTER_ERROR_RESOURCE = '_DID_ENCOUNTER_ERROR_RESOURCE';
+   var EVENT_SCROLL_TO_MESSAGES = 'SCROLL_TO_MESSAGES';
+
    var levelMap = {
       BLANK:   { weight: 0 },
       SUCCESS: { weight: 1, cssClass: 'alert alert-success' },
@@ -242,6 +244,7 @@ define( [
             } );
             model.messagesForViewByLevel = messagesForViewByLevel;
          }
+         scrollWidgetIntoView();
       }
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -290,11 +293,37 @@ define( [
 
          currentStatus = newStatus;
       }
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      function scrollWidgetIntoView() {
+         if( $scope.features.autoScroll.enabled ) {
+            setTimeout( function() {
+               $scope.$broadcast( EVENT_SCROLL_TO_MESSAGES );
+            }, 0 );
+         }
+      }
    }
 
    module.controller( 'AxMessagesWidgetController', Controller );
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+   var directiveName = 'axMessagesAutoScroll';
+
+   module.directive( directiveName, [ function( ) {
+      return {
+         link: function( $scope, $element ) {
+            if( $scope.features.autoScroll.enabled ) {
+               $scope.$on( EVENT_SCROLL_TO_MESSAGES, function() {
+                  setTimeout( function() {
+                     $element[ 0 ].scrollIntoView( true );
+                  }, 0 );
+               } );
+            }
+         }
+      };
+   } ] );
 
    return module;
 

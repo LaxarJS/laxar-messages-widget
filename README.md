@@ -4,13 +4,16 @@ The ax-messages-widget displays messages to the user, for example to communicate
 
 
 ## Content
+
 * [Appearance](#appearance)
 * [Usage](#usage)
 * [Features](#features)
 * [Integration](#integration)
 * [References](#references)
 
+
 ## Appearance
+
 ![Illustration of the ax-messages-widget](docs/img/example_1.png)
 
 Flat view without border and without button.
@@ -31,6 +34,7 @@ Messages are grouped by status class with a border and button per status class.
 ## Usage
 
 ### Installation
+
 For installation instruction take a look at the [LaxarJS documentation](https://github.com/LaxarJS/laxar/blob/master/docs/manuals/installing_widgets.md).
 
 
@@ -57,6 +61,7 @@ For full configuration options refer to the [widget.json](widget.json).
 ## Features
 
 ### 1. Display Messages (messages)
+
 *R1.1* The widget MUST display messages, which are received with events.
 The text of the message MUST be interpreted as HTML content.
 
@@ -81,7 +86,9 @@ The summarized message MUST have the top priority status class of the single mes
 
 *R1.9* If messages are summarized, the widget MUST sort the summarized message at the top-ranking position of all single summarized messages.
 
+
 ### 2. Dismiss Messages (dismiss)
+
 *R2.1* It MUST be possible to disable this feature.
 
 *R2.2* The widget MUST support a button (as icon) to hide all displayed messages when the button is clicked.
@@ -98,10 +105,14 @@ It MUST NOT publish an event with a change of its state.
 Messages which are hidden MUST stay hidden until they are renewed through events.
 A suitable event is a `didValidate` event for the relevant resource.
 
+
 ### 3. Blank Presentation (blank)
+
 *R3.1* The widget MUST be totally hidden if it has no messages.
 
+
 ### 4. Determine a Total Status (status)
+
 *R4.1* The widget MUST determine a total status of one of the status classes: ERROR, WARNING, INFO, SUCCESS and BLANK.
 The total status MUST be the one of the message with the status class with the top priority.
 If some message has the status class ERROR, then the total status is ERROR.
@@ -120,7 +131,9 @@ For example the event for setting the status WARNING with the default flag name 
 
 *R4.6*: The widget MUST delete all messages and set its total status to BLANK, if one action from a configurable list of actions is triggered.
 
+
 ### 5. Administration of resources (resource)
+
 *R5.1* The widget MUST allow to disable the feature through configuration.
 
 *R5.2* The widget MUST allow the configuration of several resources, which include messages about change and validation.
@@ -142,7 +155,9 @@ Messages about the resources of the blacklist MUST NOT be displayed.
 *R5.9* It MUST be configurable if messages for a resource MUST be deleted, when a message with status class `SUCCESS` about the resource is received.
 The new `SUCCESS` messages MUST be displayed.
 
+
 ### 6. Display Errors (errors)
+
 *R6.1* The widget MUST display errors which are reported through a `didEncounterError` event.
 This errors MUST be displayed like validate messages with status class `ERROR`.
 
@@ -150,15 +165,26 @@ This errors MUST be displayed like validate messages with status class `ERROR`.
 
 *R6.3* The widget MUST treat error messages like messages for another resource.
 
+
 ### 7. Support Internationalization (i18n)
+
 *R7.1* The widget MUST allow the configuration of a locale as described in the documentation to [LaxarJS i18n].
 When displaying the received internationalized validation messages (`didValidate` event with `i18nHtmlMessage`), the widget MUST use the current language tag of the locale.
 The current language tag is received through a resource.
 
 
+### 8. Auto Scroll the Messages into the Visible Area (autoScroll)
+
+*R8.1* The widget MUST scroll the messages into the visible area of the browser window when receiving messages.
+This feature MUST be configurable and disabled by default.
+
+
 ## Integration
+
 ### Patterns
+
 The widget supports the following event patterns as specified by the [LaxarJS Patterns] document.
+
 
 #### Resources
 
@@ -170,12 +196,14 @@ The widget supports the following event patterns as specified by the [LaxarJS Pa
 
 
 #### Flags
+
 * Flag: `status.(ERROR|WARNING|INFO|SUCCESS|BLANK).flag`
    * Role: Sender
    * Description: Set or unset the status of the widget
 
 
 ## References
+
 The following resources are useful or necessary for the understanding of this document.
 The links refer to the latest version of the documentation.
 Refer to the bower.json for the specific version that is normative for this document.
