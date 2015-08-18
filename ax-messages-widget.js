@@ -11,7 +11,7 @@ define( [
    'use strict';
 
    var DID_ENCOUNTER_ERROR_RESOURCE = '_DID_ENCOUNTER_ERROR_RESOURCE';
-   var EVENT_SCROLL_TO_MESSAGES = 'SCROLL_TO_MESSAGES';
+   var EVENT_SCROLL_TO_MESSAGES = 'axMessagesWidget.scrollToMessages';
 
    var levelMap = {
       BLANK:   { weight: 0 },
@@ -297,11 +297,14 @@ define( [
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
       function scrollWidgetIntoView() {
-         if( $scope.features.autoScroll.enabled ) {
-            setTimeout( function() {
-               $scope.$broadcast( EVENT_SCROLL_TO_MESSAGES );
-            }, 0 );
+         if( !$scope.features.autoScroll.enabled ) {
+            return;
          }
+         // in case the are no messages yet, we set a timeout to ensure that the directive
+         // axMessagesAutoScroll has registered to the event and is not still blocked by the ngIf
+         setTimeout( function() {
+            $scope.$broadcast( EVENT_SCROLL_TO_MESSAGES );
+         }, 0 );
       }
    }
 
