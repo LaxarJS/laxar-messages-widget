@@ -2,6 +2,8 @@
 
 ## Last Changes
 
+- [#10](https://github.com/LaxarJS/ax-messages-widget/issues/10): Added feature `autoScroll` to allow to scroll the messages into the visible area of the window when the widget receives messages.
+
 
 ## v3.2.0
 
