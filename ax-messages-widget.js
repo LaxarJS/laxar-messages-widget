@@ -147,7 +147,9 @@ define( [
          }
 
          if( $scope.features.resource.replace && event.outcome === 'SUCCESS' ) {
-            $scope.model.messages[ topic ].length = 0;
+            if( $scope.model.messages[ topic ] ) {
+               $scope.model.messages[ topic ].length = 0;
+            }
          }
 
          var messageBucket = $scope.model.messages;
