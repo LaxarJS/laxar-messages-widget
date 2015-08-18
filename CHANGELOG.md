@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## 3.3.0
+
 - [#11](https://github.com/LaxarJS/ax-messages-widget/issues/11): Fixed bug in feature `resource.replace`
 - [#10](https://github.com/LaxarJS/ax-messages-widget/issues/10): Added feature `autoScroll` to allow to scroll the messages into the visible area of the window when the widget receives messages.
 
