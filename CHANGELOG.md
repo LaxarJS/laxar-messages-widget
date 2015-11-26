@@ -3,6 +3,8 @@
 ## Last Changes
 
 
+## v4.0.0
+
 - [#12](https://github.com/LaxarJS/ax-messages-widget/issues/12): Status flag: No default values anymore
     + **BREAKING CHANGE:** see ticket for details
 
