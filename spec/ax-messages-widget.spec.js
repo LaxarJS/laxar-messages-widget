@@ -456,26 +456,16 @@ define( [
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'sends a state flag with BLANK when there initially is no message (R4.1, R4.3)', function() {
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.messageStatus-BLANK.true', {
-               flag: 'messageStatus-BLANK',
+            setupWithFeatures( {
+               resource: { list: [ 'allLevels' ] },
+               status: {
+                  BLANK: 'status-BLANK'
+               }
+            } );
+            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
+               flag: 'status-BLANK',
                state: true
             } );
-         } );
-
-         /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-         it( 'sends a state flag for the highest level using the default flag name without further configuration (R4.1, R4.3, R4.5)', function() {
-            var levels = [ 'ERROR', 'WARNING', 'INFO', 'SUCCESS' ];
-            for( var i = 0; i < levels.length; ++i ) {
-               setupWithFeatures( { resource: { list: [ 'allLevels' ] } } );
-               publishDidValidateEvents( data.allLevelEvents.slice( i ) );
-               var flagName = 'messageStatus-' + levels[ i ];
-
-               expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.' + flagName + '.true', {
-                  flag: flagName,
-                  state: true
-               } );
-            }
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -503,28 +493,37 @@ define( [
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'sends a flag with state false for the previous state (R4.4)', function() {
-            setupWithFeatures( { resource: { list: [ 'allLevels' ] } } );
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.messageStatus-BLANK.true', {
-               flag: 'messageStatus-BLANK',
+            setupWithFeatures( {
+               resource: {
+                  list: [ 'allLevels' ]
+               },
+               status: {
+                  BLANK: 'status-BLANK'
+               }
+            } );
+            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
+               flag: 'status-BLANK',
                state: true
             } );
 
             scopeEventBus.publish.reset();
             publishDidValidateEvents( data.allLevelEvents.slice( 0, 1 ) );
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.messageStatus-BLANK.false', {
-               flag: 'messageStatus-BLANK',
+            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.false', {
+               flag: 'status-BLANK',
                state: false
             } );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         it( 'sets the state to BLANK and deletes all messages if a configured action is triggured (R4.6)', function () {
+         it( 'sets the state to BLANK and deletes all messages if a configured action is triggured (R4.5)', function () {
             var features = {
                status: {
                   reset: {
                      onActions: [ 'resetMessages' ]
-                  }
+                  },
+                  BLANK: 'status-BLANK',
+                  ERROR: 'status-ERROR'
                },
                resource: {
                   list: [ 'allLevels' ]
@@ -535,8 +534,8 @@ define( [
 
             expect( testBed.scope.model.messagesForView.length ).toBe( 4 );
 
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.messageStatus-ERROR.true', {
-               flag: 'messageStatus-ERROR',
+            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-ERROR.true', {
+               flag: 'status-ERROR',
                state: true
             } );
 
@@ -551,8 +550,8 @@ define( [
                   action: 'resetMessages'
                }
             );
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.messageStatus-BLANK.true', {
-               flag: 'messageStatus-BLANK',
+            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
+               flag: 'status-BLANK',
                state: true
             } );
             expect( scopeEventBus.publish ).
