@@ -281,18 +281,21 @@ define( [
 
          if( currentStatus != null ) {
             var currentStatusFlag = ax.object.path( $scope.features.status, currentStatus );
-            $scope.eventBus.publish( 'didChangeFlag.' + currentStatusFlag + '.false', {
-               flag: currentStatusFlag,
-               state: false
-            } );
+            if( currentStatusFlag ) {
+               $scope.eventBus.publish( 'didChangeFlag.' + currentStatusFlag + '.false', {
+                  flag: currentStatusFlag,
+                  state: false
+               } );
+            }
          }
 
          var newStatusFlag = ax.object.path( $scope.features.status, newStatus );
-         $scope.eventBus.publish( 'didChangeFlag.' + newStatusFlag + '.true', {
-            flag: newStatusFlag,
-            state: true
-         } );
-
+         if( newStatusFlag ) {
+            $scope.eventBus.publish( 'didChangeFlag.' + newStatusFlag + '.true', {
+               flag: newStatusFlag,
+               state: true
+            } );
+         }
          currentStatus = newStatus;
       }
 

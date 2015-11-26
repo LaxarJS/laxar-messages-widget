@@ -122,14 +122,12 @@ The total status is BLANK if no message was reported.
 
 *R4.2* For every status (ERROR, WARNING, INFO, SUCCESS, BLANK) the name of a flag MUST be configurable which MUST be set in relation to the current status.
 
-*R4.3* When determining the initial or a subsequent total status, the widget MUST publish the relevant status using a `didChangeFlag` event.
+*R4.3* When determining the initial or a subsequent total status, the widget MUST publish the relevant status using a `didChangeFlag` event with a configurable name.
+If no flag name is configured for the status the widget MUST NOT publish a `didChangeFlag` event.
 
 *R4.4* When changing the total status the flag related to the old status MUST be unset and a appropriate `didChangeFlag` event MUST be published before publishing the new status.
 
-*R4.5* The default name of a flag SHOULD be a combination of "messageStatus-" and the status class.
-For example the event for setting the status WARNING with the default flag name is `didChangeFlag.messageStatus-WARNING.true` event.
-
-*R4.6*: The widget MUST delete all messages and set its total status to BLANK, if one action from a configurable list of actions is triggered.
+*R4.5*: The widget MUST delete all messages and set its total status to BLANK, if one action from a configurable list of actions is triggered.
 
 
 ### 5. Administration of resources (resource)

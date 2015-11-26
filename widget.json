@@ -40,24 +40,19 @@
             "description": "Flags by which the most severe level among all messages is indicated.",
             "properties": {
                "ERROR": {
-                  "type": "string",
-                  "default": "messageStatus-ERROR"
+                  "type": "string"
                },
                "WARNING": {
-                  "type": "string",
-                  "default": "messageStatus-WARNING"
+                  "type": "string"
                },
                "INFO": {
-                  "type": "string",
-                  "default": "messageStatus-INFO"
+                  "type": "string"
                },
                "SUCCESS": {
-                  "type": "string",
-                  "default": "messageStatus-SUCCESS"
+                  "type": "string"
                },
                "BLANK": {
-                  "type": "string",
-                  "default": "messageStatus-BLANK"
+                  "type": "string"
                },
                "reset": {
                   "type": "object",
