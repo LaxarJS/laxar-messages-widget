@@ -280,7 +280,7 @@ define( [
          if( newStatus === currentStatus ) { return; }
 
          if( currentStatus != null ) {
-            var currentStatusFlag = ax.object.path( $scope.features.status, currentStatus );
+            var currentStatusFlag = $scope.features.status[ currentStatus ];
             if( currentStatusFlag ) {
                $scope.eventBus.publish( 'didChangeFlag.' + currentStatusFlag + '.false', {
                   flag: currentStatusFlag,
@@ -289,7 +289,7 @@ define( [
             }
          }
 
-         var newStatusFlag = ax.object.path( $scope.features.status, newStatus );
+         var newStatusFlag = $scope.features.status[ newStatus ];
          if( newStatusFlag ) {
             $scope.eventBus.publish( 'didChangeFlag.' + newStatusFlag + '.true', {
                flag: newStatusFlag,
