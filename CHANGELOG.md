@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v4.1.0
+
 - [#13](https://github.com/LaxarJS/ax-messages-widget/issues/13): Expanded the widget definition
 
 
