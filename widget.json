@@ -40,19 +40,29 @@
             "description": "Flags by which the most severe level among all messages is indicated.",
             "properties": {
                "ERROR": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "topic",
+                  "axRole": "outlet"
                },
                "WARNING": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "topic",
+                  "axRole": "outlet"
                },
                "INFO": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "topic",
+                  "axRole": "outlet"
                },
                "SUCCESS": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "topic",
+                  "axRole": "outlet"
                },
                "BLANK": {
-                  "type": "string"
+                  "type": "string",
+                  "format": "topic",
+                  "axRole": "outlet"
                },
                "reset": {
                   "type": "object",
@@ -60,7 +70,12 @@
                   "properties": {
                      "onActions": {
                         "type": "array",
-                        "description": "List with actions"
+                        "description": "List with actions",
+                        "items": {
+                           "type": "string",
+                           "format": "topic",
+                           "axRole": "inlet"
+                        }
                      }
                   }
                }
@@ -87,14 +102,18 @@
                   "description": "Resource topic list. Empty list serves as catch-all, null disables the resource-feature.",
                   "default": null,
                   "items": {
-                     "type": "string"
+                     "type": "string",
+                     "format": "topic",
+                     "axRole": "inlet"
                   }
                },
                "exclude": {
                   "type": "array",
                   "description": "A list of resources to exclude from the display in case resource.list is set to catch-all.",
                   "items": {
-                     "type": "string"
+                     "type": "string",
+                     "format": "topic",
+                     "axRole": "inlet"
                   }
                },
                "replace": {
@@ -123,6 +142,8 @@
             "properties": {
                "locale": {
                   "type": "string",
+                  "format": "topic",
+                  "axRole": "inlet",
                   "description": "The topic under which to expect the locale for this widget.",
                   "default": "default"
                }
