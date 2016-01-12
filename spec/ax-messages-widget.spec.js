@@ -5,52 +5,73 @@
  */
 define( [
    'json!../widget.json',
-   '../ax-messages-widget',
-   'laxar/laxar_testing',
+   'laxar-mocks',
    'angular-mocks',
-   'jquery',
-   './spec_data',
-   'text!../default.theme/ax-messages-widget.html',
-   'angular-sanitize'
-], function( descriptor, controller, ax, angularMocks, $, specData, template ) {
+   './spec_data'
+], function( descriptor, axMocks, ngMocks, specData ) {
    'use strict';
 
    describe( 'An ax-messages-widget', function() {
 
       var ANY_FUNCTION = jasmine.any( Function );
-
-      var $container;
-      var $wrapper;
-      var testBed;
-      var eventBus;
-      var scopeEventBus;
+      var $document;
       var data;
 
-      beforeEach( function setup() {
-         angularMocks.module( 'ngSanitize' );
+      var widgetEventBus;
+      var widgetScope;
+      var testEventBus;
+      var widgetDom;
 
-         testBed = ax.testing.portalMocksAngular.createControllerTestBed( descriptor );
-         testBed.useWidgetJson();
-         setupWithFeatures( { resource: { list: [] } } );
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         data = ax.object.deepClone( specData );
+      function createSetup( widgetConfiguration ) {
 
-         $container = $( '<div id="container"></div>' ).appendTo( 'body' );
-      } );
+         beforeEach( axMocks.createSetupForWidget( descriptor, {
+            knownMissingResources: [ 'ax-button-list-control.css' ]
+         } ) );
+
+         beforeEach( function() {
+            axMocks.widget.configure( widgetConfiguration );
+         } );
+
+         beforeEach( axMocks.widget.load );
+
+         beforeEach( function() {
+            widgetDom = axMocks.widget.render();
+
+            ngMocks.inject( function( $injector ) {
+               $document = $injector.get( '$document' );
+            } );
+
+            widgetScope = axMocks.widget.$scope;
+            widgetEventBus = axMocks.widget.axEventBus;
+            testEventBus = axMocks.eventBus;
+
+            axMocks.triggerStartupEvents( {
+               didChangeLocale: {
+                  default: {
+                     locale: 'default',
+                     languageTag: 'en_US'
+                  }
+               }
+            } );
+            data = specData;
+         } );
+      }
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
       afterEach( function() {
-         testBed.tearDown();
-         $container.remove();
+         axMocks.tearDown();
       } );
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
       describe( 'with a configured feature messages', function() {
 
+         createSetup( { resource: { list: [] } } );
+
          it( 'interprets and displays received messages as HTML content (R1.1)', function() {
-            setupWithFeatures( { resource: { list: [] } } );
             publishDidValidateEvents( [
                {
                   resource: 'myResource',
@@ -64,67 +85,102 @@ define( [
                   ]
                }
             ] );
-            expect( testBed.scope.model.messagesForView[0].htmlText ).toEqual( '<b>Wrong</b> car' );
-         } );
-
-         /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-         it( 'shows the appropriate list types for each variant (R1.2)', function() {
-            var variants = { 1: 'list', 2: 'flat', 3: 'byLevel', 4: 'separate' };
-
-            for( var variant = 1; variant <= 4; ++variant ) {
-               setupWithFeatures( { layout: { variant: variant }, resource: { list: [] } } );
-               publishDidValidateEvents( [ data.cssClassTestEvent ] );
-               renderWidget();
-               expect( $wrapper.children( 0 ).attr( 'data-ng-switch-when' ) ).toEqual( variants[ variant ] );
-               $container.children().remove();
-            }
+            expect( widgetScope.model.messagesForView[0].htmlText ).toEqual( '<b>Wrong</b> car' );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'sets the css class of the border to the one of the error class (R1.3)', function() {
-            setupWithFeatures( {  resource: { list: [] } } );
             publishDidValidateEvents( [ data.cssClassTestEvent ] );
-            renderWidget();
-            expect( $( '.alert-danger' ).length ).toEqual( 1 );
-            expect( $( '.alert-success' ).length ).toEqual( 1 );
-            expect( $( '.alert-warning' ).length ).toEqual( 1 );
-            expect( $( '.alert-info' ).length ).toEqual( 1 );
-            $container.children().remove();
+            expect( $document.find( '.alert-danger' ).length ).toEqual( 1 );
+            expect( $document.find( '.alert-success' ).length ).toEqual( 1 );
+            expect( $document.find( '.alert-warning' ).length ).toEqual( 1 );
+            expect( $document.find( '.alert-info' ).length ).toEqual( 1 );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'assigns css classes according to message level (A1.4)', function() {
             publishDidValidateEvents( [ data.cssClassTestEvent ] );
-
-            var viewMessages = testBed.scope.model.messagesForView;
+            var viewMessages = widgetScope.model.messagesForView;
             expect( viewMessages.length ).toBe( 4 );
-            expect( viewMessages[0].cssClass ).toEqual( 'alert alert-danger' );
-            expect( viewMessages[1].cssClass ).toEqual( 'alert alert-success' );
-            expect( viewMessages[2].cssClass ).toEqual( 'alert alert-warning' );
-            expect( viewMessages[3].cssClass ).toEqual( 'alert alert-info' );
+            expect( viewMessages[ 0 ].cssClass ).toEqual( 'alert alert-danger' );
+            expect( viewMessages[ 1 ].cssClass ).toEqual( 'alert alert-success' );
+            expect( viewMessages[ 2 ].cssClass ).toEqual( 'alert alert-warning' );
+            expect( viewMessages[ 3 ].cssClass ).toEqual( 'alert alert-info' );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'saves the error class, html content and sort key of each message (R1.5)', function() {
             publishDidValidateEvents( [ data.cssClassTestEvent ] );
-            for( var i = 0; i < testBed.scope.model.messagesForView.length; ++i ) {
-               expect( testBed.scope.model.messages.something[ i ].level ).toBeDefined();
-               expect( testBed.scope.model.messages.something[ i ].sortKey ).toBeDefined();
-               expect( testBed.scope.model.messages.something[ i ].htmlMessage ).toBeDefined();
+            for( var i = 0; i < widgetScope.model.messagesForView.length; ++i ) {
+               expect( widgetScope.model.messages.something[ i ].level ).toBeDefined();
+               expect( widgetScope.model.messages.something[ i ].sortKey ).toBeDefined();
+               expect( widgetScope.model.messages.something[ i ].htmlMessage ).toBeDefined();
             }
          } );
+      } );
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      describe( 'with a configured feature messages and a layout variant 1', function() {
+         createSetup( { layout: { variant: 2 }, resource: { list: [] } } );
+
+         it( 'shows the appropriate list types for the variant (R1.2)', function() {
+            publishDidValidateEvents( [ data.cssClassTestEvent ] );
+            var messagesElement = $document.find( '[ data-ng-switch-when = "flat" ]' );
+            expect( messagesElement.attr( 'data-ng-switch-when' ) ).toEqual( 'flat' );
+         } );
+      } );
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      describe( 'with a configured feature messages and a layout variant 2', function() {
+         createSetup( { layout: { variant: 1 }, resource: { list: [] } } );
+
+         it( 'shows the appropriate list types for the variant (R1.2)', function() {
+            publishDidValidateEvents( [ data.cssClassTestEvent ] );
+            var messagesElement = $document.find( '[ data-ng-switch-when = "list" ]' );
+            expect( messagesElement.attr( 'data-ng-switch-when' ) ).toEqual( 'list' );
+         } );
+      } );
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      describe( 'with a configured feature messages and a layout variant 3', function() {
+         createSetup( { layout: { variant: 3 }, resource: { list: [] } } );
+
+         it( 'shows the appropriate list types for the variant (R1.2)', function() {
+            publishDidValidateEvents( [ data.cssClassTestEvent ] );
+            var messagesElement = $document.find( '[ data-ng-switch-when = "byLevel" ]' );
+            expect( messagesElement.attr( 'data-ng-switch-when' ) ).toEqual( 'byLevel' );
+         } );
+      } );
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      describe( 'with a configured feature messages and a layout variant 4', function() {
+         createSetup( { layout: { variant: 4 }, resource: { list: [] } } );
+
+         it( 'shows the appropriate list types for the variant (R1.2)', function() {
+            publishDidValidateEvents( [ data.cssClassTestEvent ] );
+            var messagesElement = $document.find( '[ data-ng-switch-when = "separate" ]' );
+            expect( messagesElement.attr( 'data-ng-switch-when' ) ).toEqual( 'separate' );
+         } );
+      } );
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      describe( 'with a configured feature messages', function() {
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          describe( 'when messages were received', function() {
 
-            beforeEach( function() {
-               setupWithFeatures( { resource: { list: [ 'pet', 'beverage', 'car' ] } } );
+            createSetup( { resource: { list: [ 'pet', 'beverage', 'car' ] } } );
 
+            beforeEach( function() {
                publishDidValidateEvents( data.simpleMessages.car );
                publishDidValidateEvents( data.simpleMessages.pet );
                publishDidValidateEvents( data.simpleMessages.beverage );
@@ -133,13 +189,13 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'puts these messages into a single view list (R1.6)', function() {
-               expect( testBed.scope.model.messagesForView.length ).toBe( 5 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 5 );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'sorts the messages by configured resources and for each resource by sortKey (R1.7)', function() {
-               var viewMessages = testBed.scope.model.messagesForView;
+               var viewMessages = widgetScope.model.messagesForView;
 
                expect( viewMessages.length ).toBe( 5 );
                expect( viewMessages[ 0 ].htmlText ).toEqual( 'No hamster' );
@@ -154,9 +210,9 @@ define( [
 
          describe( 'when multiple messages with same text are received', function() {
 
-            beforeEach( function() {
-               setupWithFeatures( { resource: { list: [ 'car', 'beverage', 'car2', 'beverage2' ] } } );
+            createSetup( { resource: { list: [ 'car', 'beverage', 'car2', 'beverage2' ] } } );
 
+            beforeEach( function() {
                publishDidValidateEvents( data.simpleMessages.car );
                publishDidValidateEvents( data.simpleMessages.car2 );
                publishDidValidateEvents( data.simpleMessages.beverage );
@@ -166,7 +222,7 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'those messages are merged using the highest level at the first position the message occurred (R1.8, R1.9)', function() {
-               var viewMessages = testBed.scope.model.messagesForView;
+               var viewMessages = widgetScope.model.messagesForView;
 
                expect( viewMessages.length ).toBe( 3 );
                expect( viewMessages[ 0 ].htmlText ).toEqual( 'Strange color' );
@@ -177,6 +233,7 @@ define( [
                expect( viewMessages[ 2 ].level ).toEqual( 'WARNING' );
             } );
          } );
+
       } );
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,19 +242,20 @@ define( [
 
          describe( 'when the feature is disabled', function() {
 
+            createSetup( {
+               resource: { list: [ 'beverage' ] },
+               dismiss: { enabled: false },
+               layout: { variant: 2 }
+            } );
+
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'beverage' ] },
-                  dismiss: { enabled: false },
-                  layout: { variant: 2 }
-               } );
                publishDidValidateEvents( data.simpleMessages.beverage );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'there is no visible button to dismiss a message (R2.1)', function() {
-               var hideButton = $( renderWidget() ).find( 'button' );
+               var hideButton =  $document.find( 'button' );
                expect( hideButton.length ).toBe( 1 );
                expect( hideButton.css( 'display' ) ).toEqual( 'none' );
             } );
@@ -207,19 +265,20 @@ define( [
 
          describe( 'when the feature is enabled', function() {
 
+            createSetup( {
+               resource: { list: [ 'beverage' ] },
+               dismiss: { enabled: true },
+               layout: { variant: 2 }
+            } );
+
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'beverage' ] },
-                  dismiss: { enabled: true },
-                  layout: { variant: 2 }
-               } );
                publishDidValidateEvents( data.simpleMessages.beverage );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'there is a visible button to dismiss a message (R2.2)', function() {
-               var hideButton = renderWidget().find( 'button' );
+               var hideButton =  $document.find( 'button' );
                expect( hideButton.length ).toBe( 1 );
                expect( hideButton.css( 'display' ) ).not.toEqual( 'none' );
             } );
@@ -229,12 +288,13 @@ define( [
 
          describe( 'when the feature is enabled for variant 1 (no alert)', function() {
 
+            createSetup( {
+               resource: { list: [ 'beverage', 'car' ] },
+               dismiss: { enabled: true },
+               layout: { variant: 1 }
+            }  );
+
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'beverage', 'car' ] },
-                  dismiss: { enabled: true },
-                  layout: { variant: 1 }
-               } );
                publishDidValidateEvents( data.simpleMessages.beverage );
                publishDidValidateEvents( data.simpleMessages.car );
             } );
@@ -242,7 +302,7 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'there is no visible dismiss button (R2.3)', function() {
-               var hideButton = renderWidget().find( 'button:visible' );
+               var hideButton =  $document.find( 'button:visible' );
 
                expect( hideButton.length ).toBe( 0 );
             } );
@@ -252,12 +312,13 @@ define( [
 
          describe( 'when the feature is enabled for variant 2 (one alert for all messages)', function() {
 
+            createSetup( {
+               resource: { list: [ 'beverage', 'car' ] },
+               dismiss: { enabled: true },
+               layout: { variant: 2 }
+            } );
+
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'beverage', 'car' ] },
-                  dismiss: { enabled: true },
-                  layout: { variant: 2 }
-               } );
                publishDidValidateEvents( data.simpleMessages.beverage );
                publishDidValidateEvents( data.simpleMessages.car );
             } );
@@ -265,20 +326,20 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'all messages can be deleted together (R2.3)', function() {
-               expect( testBed.scope.model.messagesForView.length ).toBe( 3 );
-               testBed.scope.actions.hideAllMessages();
-               expect( testBed.scope.model.messagesForView.length ).toBe( 0 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 3 );
+               widgetScope.actions.hideAllMessages();
+               expect( widgetScope.model.messagesForView.length ).toBe( 0 );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'there is only one visible dismiss button deleting all messages (R2.3)', function() {
-               var hideButton = renderWidget().find( 'button:visible' );
+               var hideButton = $document.find( 'button:visible' );
 
                expect( hideButton.length ).toBe( 1 );
-               expect( testBed.scope.model.messagesForView.length ).toBe( 3 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 3 );
                hideButton.eq( 0 ).click();
-               expect( testBed.scope.model.messagesForView.length ).toBe( 0 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 0 );
             } );
          } );
 
@@ -286,12 +347,13 @@ define( [
 
          describe( 'when the feature is enabled for variant 3 (one alert per error class)', function() {
 
+            createSetup( {
+               resource: { list: [ 'beverage', 'car' ] },
+               dismiss: { enabled: true },
+               layout: { variant: 3 }
+            } );
+
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'beverage', 'car' ] },
-                  dismiss: { enabled: true },
-                  layout: { variant: 3 }
-               } );
                publishDidValidateEvents( data.simpleMessages.beverage );
                publishDidValidateEvents( data.simpleMessages.car );
             } );
@@ -299,14 +361,14 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'each message receives a visible dismiss button (R2.3)', function() {
-               var dom = renderWidget();
+               var dom = $document;
                expect( dom.find( '.alert button.close:visible' ).length ).toBe( 2 );
-               expect( testBed.scope.model.messagesForView.length ).toBe( 3 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 3 );
                dom.find( '.alert-danger button.close' ).click();
-               testBed.scope.$apply();
-               expect( testBed.scope.model.messagesForView.length ).toBe( 2 );
+               widgetScope.$apply();
+               expect( widgetScope.model.messagesForView.length ).toBe( 2 );
                dom.find( '.alert-warning button.close' ).click();
-               expect( testBed.scope.model.messagesForView.length ).toBe( 0 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 0 );
             } );
          } );
 
@@ -314,12 +376,13 @@ define( [
 
          describe( 'when the feature is enabled for variant 4 (one alert per message)', function() {
 
+            createSetup( {
+               resource: { list: [ 'beverage', 'car' ] },
+               dismiss: { enabled: true },
+               layout: { variant: 4 }
+            } );
+
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'beverage', 'car' ] },
-                  dismiss: { enabled: true },
-                  layout: { variant: 4 }
-               } );
                publishDidValidateEvents( data.simpleMessages.beverage );
                publishDidValidateEvents( data.simpleMessages.car );
             } );
@@ -327,16 +390,16 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'each message receives a visible dismiss button (R2.3)', function() {
-               var hideButton = renderWidget().find( 'button:visible' );
+               var hideButton = $document.find( 'button:visible' );
 
                expect( hideButton.length ).toBe( 3 );
-               expect( testBed.scope.model.messagesForView.length ).toBe( 3 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 3 );
                hideButton.eq( 0 ).click();
-               expect( testBed.scope.model.messagesForView.length ).toBe( 2 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 2 );
                hideButton.eq( 1 ).click();
-               expect( testBed.scope.model.messagesForView.length ).toBe( 1 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 1 );
                hideButton.eq( 2 ).click();
-               expect( testBed.scope.model.messagesForView.length ).toBe( 0 );
+               expect( widgetScope.model.messagesForView.length ).toBe( 0 );
             } );
          } );
 
@@ -344,25 +407,24 @@ define( [
 
          describe( 'when the feature is enabled and the level changes on dismiss', function() {
 
+            createSetup( {
+               resource: { list: [ 'pet' ] },
+               dismiss: { enabled: true },
+               layout: { variant: 3 }
+            } );
+
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'pet' ] },
-                  dismiss: { enabled: true },
-                  layout: { variant: 3 }
-               } );
                publishDidValidateEvents( data.simpleMessages.pet );
 
-               scopeEventBus.publish.reset();
-
-               testBed.scope.$apply( function() {
-                  testBed.scope.actions.hideMessagesByLevel( 'ERROR' );
+               widgetScope.$apply( function() {
+                  widgetScope.actions.hideMessagesByLevel( 'ERROR' );
                } );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'the internal status does not change to a lower level (R2.4)', function() {
-               expect( scopeEventBus.publish ).not.toHaveBeenCalledWith( 'didChangeFlag.messageStatus-INFO.true', {
+               expect( widgetEventBus.publish ).not.toHaveBeenCalledWith( 'didChangeFlag.messageStatus-INFO.true', {
                   flag: 'messageStatus-INFO',
                   state: true
                } );
@@ -373,19 +435,16 @@ define( [
 
          describe( 'when there are dismissed messages and new messages arrive', function() {
 
-            var $element_;
+            createSetup( {
+               resource: { list: [ 'beverage', 'car' ] },
+               dismiss: { enabled: true },
+               layout: { variant: 4 }
+            } );
 
             beforeEach( function() {
-               setupWithFeatures( {
-                  resource: { list: [ 'beverage', 'car' ] },
-                  dismiss: { enabled: true },
-                  layout: { variant: 4 }
-               } );
-
-               $element_ = renderWidget();
                publishDidValidateEvents( data.simpleMessages.beverage );
 
-               $element_.find( 'button:visible:first' ).click();
+               widgetScope.actions.hideMessage( widgetScope.model.messagesForView[ 0 ] );
                publishDidValidateEvents( data.simpleMessages.car );
             } );
 
@@ -393,23 +452,22 @@ define( [
 
             it( 'those will be displayed (R2.5)', function() {
                var messages = [];
-               $element_.find( '[data-ng-bind-html="message.htmlText"]' ).each( function() {
-                  messages.push( $( this ).text() );
+               $document.find( '[data-ng-bind-html="message.htmlText"]' ).each( function( index, element) {
+                  messages.push( element.innerText );
                } );
-
-               expect( messages ).toContain( data.simpleMessages.car[0].data[0].htmlMessage.en_US );
-               expect( messages ).toContain( data.simpleMessages.car[0].data[1].htmlMessage.en_US );
+               expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.en_US );
+               expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.en_US );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'dismissed will remain hidden (R2.5)', function() {
                var messages = [];
-               $element_.find( '[data-ng-bind-html="message.htmlText"]' ).each( function() {
-                  messages.push( $( this ).text() );
+               $document.find( '[data-ng-bind-html="message.htmlText"]' ).each( function( index, element) {
+                  messages.push( element.innerText );
                } );
 
-               expect( messages ).not.toContain( data.simpleMessages.beverage[0].data[0].htmlMessage.en_US );
+               expect( messages ).not.toContain( data.simpleMessages.beverage[ 0 ].data[ 0 ].htmlMessage.en_US );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -424,8 +482,8 @@ define( [
 
                it( 'they will be displayed again (R2.5)', function() {
                   var messages = [];
-                  $element_.find( '[data-ng-bind-html="message.htmlText"]' ).each( function() {
-                     messages.push( $( this ).text() );
+                  $document.find( '[data-ng-bind-html="message.htmlText"]' ).each( function( index, element) {
+                     messages.push( element.innerText );
                   } );
 
                   expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.en_US );
@@ -440,8 +498,14 @@ define( [
 
       describe( 'with feature blank', function() {
 
+         createSetup( {
+            resource: { list: [] }
+         } );
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
          it( 'when there are no messages the widget is invisible (R3.1)', function() {
-            expect( renderWidget().children().length ).toBe( 0 );
+            expect( $document.find( '#ax-testWidget' ).children().length ).toBe( 0 );
          } );
       } );
 
@@ -449,119 +513,139 @@ define( [
 
       describe( 'with feature status', function() {
 
-         beforeEach( function() {
-            setupWithFeatures( { resource: { list: [ 'allLevels' ] } } );
-         } );
-
-         /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-         it( 'sends a state flag with BLANK when there initially is no message (R4.1, R4.3)', function() {
-            setupWithFeatures( {
-               resource: { list: [ 'allLevels' ] },
-               status: {
-                  BLANK: 'status-BLANK'
-               }
-            } );
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
-               flag: 'status-BLANK',
-               state: true
-            } );
-         } );
-
-         /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-         it( 'sends a state flag for the highest level using the configured flag name (R4.1, R4.2, R4.3)', function() {
-            var levels = [ 'ERROR', 'WARNING', 'INFO', 'SUCCESS' ];
-            for( var i = 0; i < levels.length; ++i ) {
-               var flagName = 'myFlag' + i;
-               var statusConfig = {};
-               statusConfig[ levels[ i ] ] = flagName;
-
-               setupWithFeatures( {
-                  resource: { list: [ 'allLevels' ] },
-                  status: statusConfig
-               } );
-               publishDidValidateEvents( data.allLevelEvents.slice( i ) );
-
-               expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.' + flagName + '.true', {
-                  flag: flagName,
-                  state: true
-               } );
+         createSetup( {
+            resource: { list: [ 'allLevels' ] },
+            status: {
+               BLANK: 'status-BLANK',
+               ERROR: 'myFlag0',
+               WARNING: 'myFlag1',
+               INFO: 'myFlag2',
+               SUCCESS: 'myFlag3'
             }
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         it( 'sends a flag with state false for the previous state (R4.4)', function() {
-            setupWithFeatures( {
-               resource: {
-                  list: [ 'allLevels' ]
-               },
-               status: {
-                  BLANK: 'status-BLANK'
-               }
-            } );
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
+         it( 'sends a state flag with BLANK when there initially is no message (R4.1, R4.3)', function() {
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
                flag: 'status-BLANK',
                state: true
-            } );
-
-            scopeEventBus.publish.reset();
-            publishDidValidateEvents( data.allLevelEvents.slice( 0, 1 ) );
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.false', {
-               flag: 'status-BLANK',
-               state: false
             } );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         it( 'sets the state to BLANK and deletes all messages if a configured action is triggured (R4.5)', function () {
-            var features = {
-               status: {
-                  reset: {
-                     onActions: [ 'resetMessages' ]
-                  },
-                  BLANK: 'status-BLANK',
-                  ERROR: 'status-ERROR'
-               },
-               resource: {
-                  list: [ 'allLevels' ]
-               }
-            };
-            setupWithFeatures( features );
+         it( 'sends a state flag for the highest level (ERROR) using the configured flag name (R4.1, R4.2, R4.3)', function() {
             publishDidValidateEvents( data.allLevelEvents.slice( 0 ) );
 
-            expect( testBed.scope.model.messagesForView.length ).toBe( 4 );
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.myFlag0.true', {
+               flag: 'myFlag0',
+               state: true
+            } );
+         } );
 
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-ERROR.true', {
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         it( 'sends a state flag for the highest level (WARNING) using the configured flag name (R4.1, R4.2, R4.3)', function() {
+            publishDidValidateEvents( data.allLevelEvents.slice( 1 ) );
+
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.myFlag1.true', {
+               flag: 'myFlag1',
+               state: true
+            } );
+         } );
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         it( 'sends a state flag for the highest level (INFO) using the configured flag name (R4.1, R4.2, R4.3)', function() {
+            publishDidValidateEvents( data.allLevelEvents.slice( 2 ) );
+
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.myFlag2.true', {
+               flag: 'myFlag2',
+               state: true
+            } );
+         } );
+
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         it( 'sends a state flag for the highest level (SUCCESS) using the configured flag name (R4.1, R4.2, R4.3)', function() {
+            publishDidValidateEvents( data.allLevelEvents.slice( 3 ) );
+
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.myFlag3.true', {
+               flag: 'myFlag3',
+               state: true
+            } );
+         } );
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         it( 'sends a flag with state false for the previous state (R4.4)', function() {
+
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
+               flag: 'status-BLANK',
+               state: true
+            } );
+
+            publishDidValidateEvents( data.allLevelEvents.slice( 0, 1 ) );
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.false', {
+               flag: 'status-BLANK',
+               state: false
+            } );
+         } );
+
+      } );
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      describe( 'with feature status', function() {
+         var features = {
+            status: {
+               reset: {
+                  onActions: [ 'resetMessages' ]
+               },
+               BLANK: 'status-BLANK',
+               ERROR: 'status-ERROR'
+            },
+            resource: {
+               list: [ 'allLevels' ]
+            }
+         };
+         createSetup( features );
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         it( 'sets the state to BLANK and deletes all messages if a configured action is triggured (R4.5)', function () {
+            publishDidValidateEvents( data.allLevelEvents.slice( 0 ) );
+
+            expect( widgetScope.model.messagesForView.length ).toBe( 4 );
+
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-ERROR.true', {
                flag: 'status-ERROR',
                state: true
             } );
 
-            scopeEventBus.publish.reset();
-            eventBus.publish( 'takeActionRequest.resetMessages', {
+            testEventBus.publish( 'takeActionRequest.resetMessages', {
                action: 'resetMessages'
             } );
-            jasmine.Clock.tick( 0 );
+            testEventBus.flush();
 
-            expect( scopeEventBus.publish ).
+            expect( widgetEventBus.publish ).
                toHaveBeenCalledWith( 'willTakeAction.resetMessages', {
                   action: 'resetMessages'
                }
             );
-            expect( scopeEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
+            expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
                flag: 'status-BLANK',
                state: true
             } );
-            expect( scopeEventBus.publish ).
+            expect( widgetEventBus.publish ).
                toHaveBeenCalledWith( 'didTakeAction.resetMessages', {
                   action: 'resetMessages'
                }
             );
-            expect( testBed.scope.model.messagesForView.length ).toBe( 0 );
+            expect( widgetScope.model.messagesForView.length ).toBe( 0 );
          } );
-
       } );
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -570,15 +654,14 @@ define( [
 
          describe( 'if resource list is null', function() {
 
-            beforeEach( function() {
-               setupWithFeatures( { resource: { list: null } } );
-            } );
+            createSetup( { resource: { list: null } } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'the feature is completely disabled (R5.1)', function() {
-               var unexpectedCalls = scopeEventBus.subscribe.calls.reduce( function( collectedCalls, call ) {
-                  return call.args[ 0 ].match( /^didValidate|^didReplace|^validateRequest/ ) ?
+
+               var unexpectedCalls = widgetEventBus.subscribe.calls.allArgs().reduce( function( collectedCalls, call ) {
+                  return call[ 0 ].match( /^didValidate|^didReplace|^validateRequest/ ) ?
                      collectedCalls.concat( [ call.args[ 0 ] ] ) : collectedCalls;
                }, [] );
 
@@ -590,19 +673,23 @@ define( [
 
          describe( 'if resource list is empty', function() {
 
-            beforeEach( function() {
-               setupWithFeatures( { resource: { list: [] } } );
-            } );
+            createSetup( { resource: { list: [] } } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'all resources are validated (R5.2)', function() {
-               expect( scopeEventBus.subscribe ).toHaveBeenCalledWith( 'didValidate', ANY_FUNCTION );
+               expect( widgetEventBus.subscribe ).toHaveBeenCalledWith( 'didValidate', ANY_FUNCTION );
             } );
 
-            //////////////////////////////////////////////////////////////////////////////////////////////////
+         } );
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         describe( 'if resource list is empty', function() {
 
             describe( 'when messages are received', function() {
+
+               createSetup( { resource: { list: [] } } );
 
                beforeEach( function() {
                   publishDidValidateEvents( data.simpleMessages.car );
@@ -610,59 +697,60 @@ define( [
                   publishDidValidateEvents( data.simpleMessages.beverage );
                } );
 
-               //////////////////////////////////////////////////////////////////////////////////////////////////
+               ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'all messages are inserted into the respective lists (R5.3, R5.6)', function() {
-                  expect( testBed.scope.model.messages.car )
+                  expect( widgetScope.model.messages.car )
                      .toEqual( data.simpleMessages.car[ 0 ].data );
-                  expect( testBed.scope.model.messages.pet )
+                  expect( widgetScope.model.messages.pet )
                      .toEqual( [ data.simpleMessages.pet[ 0 ].data[ 0 ], data.simpleMessages.pet[ 1 ].data[ 0 ] ] );
-                  expect( testBed.scope.model.messages.beverage )
+                  expect( widgetScope.model.messages.beverage )
                      .toEqual( data.simpleMessages.beverage[ 0 ].data );
                } );
 
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages are deleted again for didReplace of a certain resource (R5.4)', function() {
-                  publishDidReplaceEvents( [ { resource: 'pet', data: {} } ] );
-                  publishDidReplaceEvents( [ { resource: 'beverage', data: {} } ] );
+                  testEventBus.publish( 'didReplace.pet', { resource: 'pet', data: {} } );
+                  testEventBus.publish( 'didReplace.beverage', { resource: 'beverage', data: {} } );
+                  testEventBus.flush();
 
-                  expect( testBed.scope.model.messages.car )
+                  expect( widgetScope.model.messages.car )
                      .toEqual( data.simpleMessages.car[ 0 ].data );
-                  expect( testBed.scope.model.messages.pet ) .toEqual( [] );
-                  expect( testBed.scope.model.messages.beverage ) .toEqual( [] );
+                  expect( widgetScope.model.messages.pet ) .toEqual( [] );
+                  expect( widgetScope.model.messages.beverage ) .toEqual( [] );
 
-                  expect( testBed.scope.model.messagesForView.length ).toBe( 2 );
+                  expect( widgetScope.model.messagesForView.length ).toBe( 2 );
                } );
 
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages are deleted again for validateRequest of a certain resource (R5.4)', function() {
-                  eventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
-                  eventBus.publish( 'validateRequest.beverage', { resource: 'beverage' } );
-                  jasmine.Clock.tick( 0 );
+                  testEventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
+                  testEventBus.publish( 'validateRequest.beverage', { resource: 'beverage' } );
+                  testEventBus.flush();
 
-                  expect( testBed.scope.model.messages.car )
+                  expect( widgetScope.model.messages.car )
                      .toEqual( data.simpleMessages.car[ 0 ].data );
-                  expect( testBed.scope.model.messages.pet ) .toEqual( [] );
-                  expect( testBed.scope.model.messages.beverage ) .toEqual( [] );
+                  expect( widgetScope.model.messages.pet ) .toEqual( [] );
+                  expect( widgetScope.model.messages.beverage ) .toEqual( [] );
 
-                  expect( testBed.scope.model.messagesForView.length ).toBe( 2 );
+                  expect( widgetScope.model.messagesForView.length ).toBe( 2 );
                } );
 
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages for sub-topics are deleted on validateRequest of a super-topic resource (R5.5)', function() {
                   publishDidValidateEvents( data.subMessages[ 'pet-health' ] );
-                  jasmine.Clock.tick( 0 );
-                  expect( testBed.scope.model.messages[ 'pet-health' ] )
+                  testEventBus.flush();
+                  expect( widgetScope.model.messages[ 'pet-health' ] )
                      .toEqual( data.subMessages[ 'pet-health' ][ 0 ].data );
-                  expect( testBed.scope.model.messagesForView.length ).toBe( 6 );
+                  expect( widgetScope.model.messagesForView.length ).toBe( 6 );
 
-                  eventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
-                  jasmine.Clock.tick( 0 );
-                  expect( testBed.scope.model.messages[ 'pet-health' ] ) .toEqual( [] );
-                  expect( testBed.scope.model.messagesForView.length ).toBe( 3 );
+                  testEventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
+                  testEventBus.flush();
+                  expect( widgetScope.model.messages[ 'pet-health' ] ) .toEqual( [] );
+                  expect( widgetScope.model.messagesForView.length ).toBe( 3 );
                } );
 
                ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -672,10 +760,10 @@ define( [
 
                   var carMessages = data.simpleMessages.car[ 0 ].data.concat( data.simpleMessages.car3[ 0 ].data );
 
-                  expect( testBed.scope.model.messages.car )
+                  expect( widgetScope.model.messages.car )
                      .toEqual( carMessages );
 
-                  expect( testBed.scope.model.messagesForView.length ).toBe( 6 );
+                  expect( widgetScope.model.messagesForView.length ).toBe( 6 );
                } );
             } );
 
@@ -683,9 +771,9 @@ define( [
 
             describe( 'and an exclude list is given', function() {
 
-               beforeEach( function() {
-                  setupWithFeatures( { resource: { list: [], exclude: [ 'car', 'pet' ] } } );
+               createSetup( { resource: { list: [], exclude: [ 'car', 'pet' ] } } );
 
+               beforeEach( function() {
                   publishDidValidateEvents( data.simpleMessages.car );
                   publishDidValidateEvents( data.simpleMessages.pet );
                   publishDidValidateEvents( data.simpleMessages.beverage );
@@ -694,18 +782,18 @@ define( [
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages of excluded resources are not inserted into the respective lists (R5.7)', function() {
-                  expect( testBed.scope.model.messages.car ).toBeUndefined();
-                  expect( testBed.scope.model.messages.pet ).toBeUndefined();
-                  expect( testBed.scope.model.messages.beverage )
+                  expect( widgetScope.model.messages.car ).toBeUndefined();
+                  expect( widgetScope.model.messages.pet ).toBeUndefined();
+                  expect( widgetScope.model.messages.beverage )
                      .toEqual( data.simpleMessages.beverage[ 0 ].data );
                } );
 
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages of resources that are subtopics of excluded resources are not inserted into the respective lists (R5.8)', function() {
-                  expect( testBed.scope.model.messages.car ).toBeUndefined();
-                  expect( testBed.scope.model.messages.pet ).toBeUndefined();
-                  expect( testBed.scope.model.messages.beverage )
+                  expect( widgetScope.model.messages.car ).toBeUndefined();
+                  expect( widgetScope.model.messages.pet ).toBeUndefined();
+                  expect( widgetScope.model.messages.beverage )
                      .toEqual( data.simpleMessages.beverage[ 0 ].data );
                } );
             } );
@@ -713,11 +801,10 @@ define( [
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             describe( 'and SUCCESS message should replace others (R5.9)', function() {
-               beforeEach( function() {
-                  setupWithFeatures( { resource: { list: [], replace: true } } );
-               } );
 
-               //////////////////////////////////////////////////////////////////////////////////////////////////
+               createSetup( { resource: { list: [], replace: true } } );
+
+               ///////////////////////////////////////////////////////////////////////////////////////////////
 
                describe( 'when messages are received', function() {
 
@@ -727,16 +814,16 @@ define( [
                      publishDidValidateEvents( data.simpleMessages.beverage );
                   } );
 
-                  //////////////////////////////////////////////////////////////////////////////////////////////////
+                  ////////////////////////////////////////////////////////////////////////////////////////////
 
                   it( 'messages are deleted again for SUCCESS message of a certain resource (R5.9)', function() {
 
                      publishDidValidateEvents( data.simpleMessages.car3 );
 
-                     expect( testBed.scope.model.messages.car )
+                     expect( widgetScope.model.messages.car )
                         .toEqual( data.simpleMessages.car3[ 0 ].data );
 
-                     expect( testBed.scope.model.messagesForView.length ).toBe( 4 );
+                     expect( widgetScope.model.messagesForView.length ).toBe( 4 );
 
                   } );
                } );
@@ -747,18 +834,16 @@ define( [
 
          describe( 'if resource list is given', function() {
 
-            beforeEach( function() {
-               setupWithFeatures( { resource: { list: [ 'car', 'pet' ] } } );
-            } );
+            createSetup( { resource: { list: [ 'car', 'pet' ] } } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'only the relevant resources are validated (R5.2)', function() {
-               expect( scopeEventBus.subscribe ).not.toHaveBeenCalledWith( 'didValidate', ANY_FUNCTION );
-               expect( scopeEventBus.subscribe ).not.toHaveBeenCalledWith( 'didReplace', ANY_FUNCTION );
+               expect( widgetEventBus.subscribe ).not.toHaveBeenCalledWith( 'didValidate', ANY_FUNCTION );
+               expect( widgetEventBus.subscribe ).not.toHaveBeenCalledWith( 'didReplace', ANY_FUNCTION );
 
-               expect( scopeEventBus.subscribe ).toHaveBeenCalledWith( 'didValidate.car', ANY_FUNCTION );
-               expect( scopeEventBus.subscribe ).toHaveBeenCalledWith( 'didValidate.pet', ANY_FUNCTION );
+               expect( widgetEventBus.subscribe ).toHaveBeenCalledWith( 'didValidate.car', ANY_FUNCTION );
+               expect( widgetEventBus.subscribe ).toHaveBeenCalledWith( 'didValidate.pet', ANY_FUNCTION );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -774,67 +859,68 @@ define( [
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'relevant messages are inserted into the respective lists (R5.3, R5.6)', function() {
-                  expect( testBed.scope.model.messages.car )
+                  expect( widgetScope.model.messages.car )
                      .toEqual( data.simpleMessages.car[ 0 ].data );
-                  expect( testBed.scope.model.messages.pet )
+                  expect( widgetScope.model.messages.pet )
                      .toEqual( [ data.simpleMessages.pet[ 0 ].data[ 0 ], data.simpleMessages.pet[ 1 ].data[ 0 ] ] );
-                  expect( testBed.scope.model.messages.beverage ).toBeUndefined();
+                  expect( widgetScope.model.messages.beverage ).toBeUndefined();
                } );
 
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages are deleted again for didReplace of a certain resource (R5.4)', function() {
-                  publishDidReplaceEvents( [ { resource: 'pet', data: {} } ] );
+                  testEventBus.publish( 'didReplace.pet', { resource: 'pet', data: {} } );
+                  testEventBus.flush();
 
-                  expect( testBed.scope.model.messages.car )
+                  expect( widgetScope.model.messages.car )
                      .toEqual( data.simpleMessages.car[ 0 ].data );
-                  expect( testBed.scope.model.messages.pet ) .toEqual( [] );
-                  expect( testBed.scope.model.messages.beverage ).toBeUndefined();
+                  expect( widgetScope.model.messages.pet ) .toEqual( [] );
+                  expect( widgetScope.model.messages.beverage ).toBeUndefined();
 
-                  expect( testBed.scope.model.messagesForView.length ).toBe( 2 );
+                  expect( widgetScope.model.messagesForView.length ).toBe( 2 );
                } );
 
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages are deleted again for validateRequest of a certain resource (R5.4)', function() {
-                  eventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
-                  jasmine.Clock.tick( 0 );
+                  testEventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
+                  testEventBus.flush();
 
-                  expect( testBed.scope.model.messages.car )
+                  expect( widgetScope.model.messages.car )
                      .toEqual( data.simpleMessages.car[ 0 ].data );
-                  expect( testBed.scope.model.messages.pet ) .toEqual( [] );
+                  expect( widgetScope.model.messages.pet ) .toEqual( [] );
 
-                  expect( testBed.scope.model.messagesForView.length ).toBe( 2 );
+                  expect( widgetScope.model.messagesForView.length ).toBe( 2 );
                } );
+            } );
+         } );
+
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+         describe( 'if a resource list and an exclude list is given', function() {
+
+            createSetup( { resource: { list: [ 'car', 'pet' ], exclude: [ 'pet' ] } } );
+
+            beforeEach( function() {
+               publishDidValidateEvents( data.simpleMessages.car );
+               publishDidValidateEvents( data.simpleMessages.pet );
+               publishDidValidateEvents( data.simpleMessages.beverage );
+               publishDidValidateEvents( data.subMessages[ 'pet-health' ] );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
-            describe( 'and an exclude list is given', function() {
+            it( 'messages of excluded resources are not inserted into the respective lists (R5.7)', function() {
+               expect( widgetScope.model.messages.car )
+                  .toEqual( data.simpleMessages.car[ 0 ].data );
+               expect( widgetScope.model.messages.pet ).toBeUndefined();
+               expect( widgetScope.model.messages.beverage ).toBeUndefined();
+            } );
 
-               beforeEach( function() {
-                  setupWithFeatures( { resource: { list: [ 'car', 'pet' ], exclude: [ 'pet' ] } } );
+            //////////////////////////////////////////////////////////////////////////////////////////////////
 
-                  publishDidValidateEvents( data.simpleMessages.car );
-                  publishDidValidateEvents( data.simpleMessages.pet );
-                  publishDidValidateEvents( data.simpleMessages.beverage );
-                  publishDidValidateEvents( data.subMessages[ 'pet-health' ] );
-               } );
-
-               ///////////////////////////////////////////////////////////////////////////////////////////////
-
-               it( 'messages of excluded resources are not inserted into the respective lists (R5.7)', function() {
-                  expect( testBed.scope.model.messages.car )
-                     .toEqual( data.simpleMessages.car[ 0 ].data );
-                  expect( testBed.scope.model.messages.pet ).toBeUndefined();
-                  expect( testBed.scope.model.messages.beverage ).toBeUndefined();
-               } );
-
-               ///////////////////////////////////////////////////////////////////////////////////////////////
-
-               it( 'sub-resources of excluded resources are not inserted into the respective lists (R5.8)', function() {
-                  expect( testBed.scope.model.messages[ 'pet-health' ] ).toBeUndefined();
-               } );
+            it( 'sub-resources of excluded resources are not inserted into the respective lists (R5.8)', function() {
+               expect( widgetScope.model.messages[ 'pet-health' ] ).toBeUndefined();
             } );
          } );
       } );
@@ -845,26 +931,26 @@ define( [
 
          describe( 'when the feature is enabled', function() {
 
-            beforeEach( function() {
-               setupWithFeatures( { errors: { enabled: true } } );
+            createSetup( { errors: { enabled: true } } );
 
-               eventBus.publish( 'didEncounterError.HTTP_PUT', {
+            beforeEach( function() {
+               testEventBus.publish( 'didEncounterError.HTTP_PUT', {
                   code: 'HTTP_PUT',
                   message: 'There was an error'
                } );
-               jasmine.Clock.tick( 0 );
+               testEventBus.flush();
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'the widget subscribes to this type of events (R6.2)', function() {
-               expect( scopeEventBus.subscribe ).toHaveBeenCalledWith( 'didEncounterError', ANY_FUNCTION );
+               expect( widgetEventBus.subscribe ).toHaveBeenCalledWith( 'didEncounterError', ANY_FUNCTION );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'the treats the events as validation messages of outcome ERROR of a special resource (R6.1, R6.3)', function() {
-               expect( testBed.scope.model.messages._DID_ENCOUNTER_ERROR_RESOURCE ).toEqual( [ {
+               expect( widgetScope.model.messages._DID_ENCOUNTER_ERROR_RESOURCE ).toEqual( [ {
                   level: 'ERROR',
                   htmlMessage: 'There was an error',
                   sortKey: '000'
@@ -876,16 +962,17 @@ define( [
 
          describe( 'when the feature is disabled', function() {
 
+            createSetup( { errors: { enabled: false } } );
+
             beforeEach( function() {
-               setupWithFeatures( { errors: { enabled: false } } );
-               eventBus.publish( 'didEncounterError');
-               jasmine.Clock.tick( 0 );
+               testEventBus.publish( 'didEncounterError' );
+               testEventBus.flush();
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'the widget ignores this type of events (R6.2)', function() {
-               expect( scopeEventBus.subscribe ).not.toHaveBeenCalledWith( 'didEncounterError', ANY_FUNCTION );
+               expect( widgetEventBus.subscribe ).not.toHaveBeenCalledWith( 'didEncounterError', ANY_FUNCTION );
             } );
          } );
       } );
@@ -894,38 +981,36 @@ define( [
 
       describe( 'with feature i18n', function() {
 
-         var $element_;
+         createSetup( {
+            resource: { list: [ 'beverage', 'car' ] },
+            dismiss: { enabled: true },
+            layout: { variant: 4 }
+         } );
 
          beforeEach( function() {
-            setupWithFeatures( {
-               resource: { list: [ 'beverage', 'car' ] },
-               dismiss: { enabled: true },
-               layout: { variant: 4 }
-            } );
-            $element_ = renderWidget();
             publishDidValidateEvents( data.simpleMessages.car );
          } );
 
-         //////////////////////////////////////////////////////////////////////////////////////////////////
+         /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'updates the message as the locale changes (R7.1)', function() {
             var messages = [];
-            $element_.find( '[data-ng-bind-html="message.htmlText"]' ).each( function() {
-               messages.push( $( this ).text() );
+            $document.find( '[data-ng-bind-html="message.htmlText"]' ).each( function( index, element) {
+               messages.push( element.innerText );
             } );
             expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.en_US );
             expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.en_US );
 
 
-            eventBus.publish( 'didChangeLocale.default', {
+            testEventBus.publish( 'didChangeLocale.default', {
                locale: 'default',
                languageTag: 'de_DE'
             } );
-            jasmine.Clock.tick( 0 );
+            testEventBus.flush();
 
             messages = [];
-            $element_.find( '[data-ng-bind-html="message.htmlText"]' ).each( function() {
-               messages.push( $( this ).text() );
+            $document.find( '[data-ng-bind-html="message.htmlText"]' ).each( function( index, element) {
+               messages.push( element.innerText );
             } );
             expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.de_DE );
             expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.de_DE );
@@ -934,52 +1019,12 @@ define( [
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      function publishDidReplaceEvents( events ) {
-         events.forEach( function( event ) {
-            eventBus.publish( 'didReplace.' + event.resource, event );
-            jasmine.Clock.tick( 0 );
-         } );
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
       function publishDidValidateEvents( events ) {
          events.forEach( function( event ) {
-            eventBus.publish( 'didValidate.' + event.resource, event );
-            jasmine.Clock.tick( 0 );
+            testEventBus.publish( 'didValidate.' + event.resource, event );
+            testEventBus.flush();
          } );
       }
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      function renderWidget() {
-         var $compile = null;
-         angularMocks.inject( function( _$compile_ ) {
-            $compile = _$compile_;
-         } );
-
-         var element = $compile( template )( testBed.scope );
-         $container.append( element );
-         testBed.scope.$digest();
-
-         $wrapper = $( $container.children().get( 0 ) );
-         return $container;
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      function setupWithFeatures( features ) {
-         testBed.featuresMock = features;
-         testBed.setup();
-
-         eventBus = testBed.eventBusMock;
-         scopeEventBus = testBed.scope.eventBus;
-
-         eventBus.publish( 'didChangeLocale.default', {
-            locale: 'default',
-            languageTag: 'en_US'
-         } );
-         jasmine.Clock.tick( 0 );
-      }
    } );
 } );
