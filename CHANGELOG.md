@@ -2,6 +2,8 @@
 
 ## Last Changes
 
+- [#14](https://github.com/LaxarJS/ax-messages-widget/issues/14): Use laxar-mocks instead of laxar-testing now
+
 
 ## v4.1.0
 
