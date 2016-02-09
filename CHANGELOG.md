@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v4.3.0
+
 - [#15](https://github.com/LaxarJS/ax-messages-widget/issues/15): performance: one-time-bind feature configuration
 
 
