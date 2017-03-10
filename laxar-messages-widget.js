@@ -29,7 +29,6 @@ const layoutVariants = {
 Controller.$inject = [ '$scope', 'axFeatures', 'axI18n' ];
 
 function Controller( $scope, features, i18n ) {
-   console.warn( 'hallo', features.i18n.locale );
 
    i18n.whenLocaleChanged( rebuildMessagesForView );
 

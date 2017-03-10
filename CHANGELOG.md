@@ -2,6 +2,8 @@
 
 ## Last Changes
 
+- [#17](https://github.com/LaxarJS/ax-messages-widget/issues/17): removed some develop hacks
+
 
 ## v5.0.0-alpha.0
 

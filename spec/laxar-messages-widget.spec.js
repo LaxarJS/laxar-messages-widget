@@ -92,7 +92,6 @@ describe( 'An ax-messages-widget', () => {
       it( 'assigns css classes according to message level (A1.4)', () => {
          publishDidValidateEvents( [ data.cssClassTestEvent ] );
          const viewMessages = widgetScope.model.messagesForView;
-         // console.log( widgetDom.outerHTML );
          expect( viewMessages.length ).toBe( 4 );
          expect( viewMessages[ 0 ].cssClass ).toEqual( 'alert alert-danger' );
          expect( viewMessages[ 1 ].cssClass ).toEqual( 'alert alert-success' );
