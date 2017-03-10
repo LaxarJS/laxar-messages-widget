@@ -1,14 +1,14 @@
 /**
- * Copyright 2015 aixigo AG
+ * Copyright 2015-2017 aixigo AG
  * Released under the MIT license.
  * http://laxarjs.org/license
  */
-define( {
+export default {
    simpleMessages: {
       car: [
          {
             resource: 'car',
-            outcome:  'ERROR',
+            outcome: 'ERROR',
             data: [
                {
                   htmlMessage: { 'en_US': 'Wrong car', 'de_DE': 'Falsches Auto' },
@@ -26,7 +26,7 @@ define( {
       pet: [
          {
             resource: 'pet',
-            outcome:  'ERROR',
+            outcome: 'ERROR',
             data: [
                {
                   htmlMessage: { 'en_US': 'No hamster' },
@@ -37,7 +37,7 @@ define( {
          },
          {
             resource: 'pet',
-            outcome:  'INFO',
+            outcome: 'INFO',
             data: [
                {
                   htmlMessage: { 'en_US': 'Hamster is hungry' },
@@ -50,7 +50,7 @@ define( {
       beverage: [
          {
             resource: 'beverage',
-            outcome:  'WARNING',
+            outcome: 'WARNING',
             data: [
                {
                   htmlMessage: { 'en_US': 'Too expensive' },
@@ -63,7 +63,7 @@ define( {
       car2: [
          {
             resource: 'car2',
-            outcome:  'INFO',
+            outcome: 'INFO',
             data: [
                {
                   htmlMessage: { 'en_US': 'Wrong car' },
@@ -74,7 +74,7 @@ define( {
          },
          {
             resource: 'car2',
-            outcome:  'ERROR',
+            outcome: 'ERROR',
             data: [
                {
                   htmlMessage: { 'en_US': 'Strange color' },
@@ -87,7 +87,7 @@ define( {
       beverage2: [
          {
             resource: 'beverage2',
-            outcome:  'INFO',
+            outcome: 'INFO',
             data: [
                {
                   htmlMessage: { 'en_US': 'Too expensive' },
@@ -100,7 +100,7 @@ define( {
       car3: [
          {
             resource: 'car',
-            outcome:  'SUCCESS',
+            outcome: 'SUCCESS',
             data: [
                {
                   htmlMessage: { 'en_US': 'Red car', 'de_DE': 'Rotes Auto' },
@@ -115,7 +115,7 @@ define( {
       'pet-health': [
          {
             resource: 'pet-health',
-            outcome:  'WARNING',
+            outcome: 'WARNING',
             data: [
                {
                   htmlMessage: { 'en_US': 'Hamster health at critical levels' },
@@ -170,4 +170,4 @@ define( {
          data: [ { htmlMessage: { 'en_US': 'success!' }, level: 'SUCCESS' } ]
       }
    ]
-} );
+};

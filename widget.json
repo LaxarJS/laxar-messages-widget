@@ -1,11 +1,12 @@
 {
-   "name": "ax-messages-widget",
+   "name": "laxar-messages-widget",
    "description": "Displays messages to the user, for example to communicate validation results.",
+
    "integration": {
       "technology": "angular",
       "type": "widget"
    },
-   "compatibility": [ "json-patch" ],
+
    "features": {
       "$schema": "http://json-schema.org/draft-04/schema#",
       "type": "object",

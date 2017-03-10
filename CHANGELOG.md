@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+- [#16](https://github.com/LaxarJS/ax-messages-widget/issues/16): upgraded to LaxarJS v2
+    + **BREAKING CHANGE:** see ticket for details
+
 
 ## v4.3.0
 
