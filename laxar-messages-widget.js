@@ -4,6 +4,7 @@
  * http://laxarjs.org/license
  */
 import * as ng from 'angular';
+import 'angular-sanitize';
 import { object } from 'laxar';
 import { flags } from 'laxar-patterns';
 
@@ -307,6 +308,6 @@ const autoScrollDirective = [ () => {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-export const name = ng.module( 'axMessagesWidget', [] )
+export const name = ng.module( 'axMessagesWidget', [ 'ngSanitize' ] )
    .controller( 'AxMessagesWidgetController', Controller )
    .directive( autoScrollDirectiveName, autoScrollDirective ).name;

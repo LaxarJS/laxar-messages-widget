@@ -9,7 +9,7 @@ import 'angular-mocks';
 import specData from './spec_data';
 
 
-describe( 'An ax-messages-widget', () => {
+describe( 'A laxar-messages-widget', () => {
 
    const ANY_FUNCTION = jasmine.any( Function );
    let data;
