@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v5.0.0-rc.0
+
 - [#18](https://github.com/LaxarJS/laxar-messages-widget/issues/18): renamed repository to match artifact
 
 
