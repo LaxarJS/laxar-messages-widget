@@ -1,6 +1,6 @@
 {
   "name": "laxar-messages-widget",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Displays messages to the user, for example to communicate validation results.",
   "homepage": "http://laxarjs.org",
   "main": "laxar-messages-widget.js",

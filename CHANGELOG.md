@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v5.0.1
+
 - [#19](https://github.com/LaxarJS/laxar-messages-widget/issues/19): fixed version number in package.json
 
 
