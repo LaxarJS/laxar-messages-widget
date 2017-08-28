@@ -2,6 +2,9 @@
 
 ## Last Changes
 
+
+## v6.0.0-beta.0
+
 - [#20](https://github.com/LaxarJS/laxar-messages-widget/issues/20): transformed into plain widget
     + **BREAKING CHANGE:** see ticket for details
 
