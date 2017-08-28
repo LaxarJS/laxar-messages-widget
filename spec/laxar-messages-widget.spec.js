@@ -3,9 +3,8 @@
  * Released under the MIT license.
  * http://laxarjs.org/license
  */
+/* eslint-disable max-len */
 import * as axMocks from 'laxar-mocks';
-import 'angular';
-import 'angular-mocks';
 import specData from './spec_data';
 
 
@@ -15,7 +14,6 @@ describe( 'A laxar-messages-widget', () => {
    let data;
 
    let widgetEventBus;
-   let widgetScope;
    let widgetDom;
    let testEventBus;
 
@@ -33,8 +31,6 @@ describe( 'A laxar-messages-widget', () => {
 
       beforeEach( () => {
          widgetDom = axMocks.widget.render();
-
-         widgetScope = axMocks.widget.$scope;
          widgetEventBus = axMocks.widget.axEventBus;
          testEventBus = axMocks.eventBus;
 
@@ -74,7 +70,7 @@ describe( 'A laxar-messages-widget', () => {
                ]
             }
          ] );
-         expect( widgetScope.model.messagesForView[ 0 ].htmlText ).toEqual( '<b>Wrong</b> car' );
+         expect( dom( 'li > span' )[ 0 ].innerHTML ).toEqual( '<b>Wrong</b> car' );
       } );
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,47 +87,35 @@ describe( 'A laxar-messages-widget', () => {
 
       it( 'assigns css classes according to message level (A1.4)', () => {
          publishDidValidateEvents( [ data.cssClassTestEvent ] );
-         const viewMessages = widgetScope.model.messagesForView;
-         expect( viewMessages.length ).toBe( 4 );
-         expect( viewMessages[ 0 ].cssClass ).toEqual( 'alert alert-danger' );
-         expect( viewMessages[ 1 ].cssClass ).toEqual( 'alert alert-success' );
-         expect( viewMessages[ 2 ].cssClass ).toEqual( 'alert alert-warning' );
-         expect( viewMessages[ 3 ].cssClass ).toEqual( 'alert alert-info' );
+         const classes = dom( 'div.alert' ).map( _ => _.className );
+         expect( classes.length ).toBe( 4 );
+         expect( classes ).toContain( 'alert alert-danger' );
+         expect( classes ).toContain( 'alert alert-success' );
+         expect( classes ).toContain( 'alert alert-warning' );
+         expect( classes ).toContain( 'alert alert-info' );
       } );
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      it( 'saves the error class, html content and sort key of each message (R1.5)', () => {
-         publishDidValidateEvents( [ data.cssClassTestEvent ] );
-         for( let i = 0; i < widgetScope.model.messagesForView.length; ++i ) {
-            expect( widgetScope.model.messages.something[ i ].level ).toBeDefined();
-            expect( widgetScope.model.messages.something[ i ].sortKey ).toBeDefined();
-            expect( widgetScope.model.messages.something[ i ].htmlMessage ).toBeDefined();
-         }
-      } );
    } );
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    describe( 'with a configured feature messages and a layout variant 1', () => {
-      createSetup( { layout: { variant: 2 }, resource: { list: [] } } );
+      createSetup( { layout: { variant: 1 }, resource: { list: [] } } );
 
       it( 'shows the appropriate list types for the variant (R1.2)', () => {
          publishDidValidateEvents( [ data.cssClassTestEvent ] );
-         const [ messagesElement ] = dom( '[data-ng-switch-when="flat"]' );
-         expect( messagesElement.getAttribute( 'data-ng-switch-when' ) ).toEqual( 'flat' );
+         expect( dom( '.ax-local-list.ax-local-without-frame' )[ 0 ] ).toBeDefined();
       } );
    } );
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    describe( 'with a configured feature messages and a layout variant 2', () => {
-      createSetup( { layout: { variant: 1 }, resource: { list: [] } } );
+      createSetup( { layout: { variant: 2 }, resource: { list: [] } } );
 
       it( 'shows the appropriate list types for the variant (R1.2)', () => {
          publishDidValidateEvents( [ data.cssClassTestEvent ] );
-         const [ messagesElement ] = dom( '[data-ng-switch-when="list"]' );
-         expect( messagesElement.getAttribute( 'data-ng-switch-when' ) ).toEqual( 'list' );
+         expect( dom( '.alert.ax-local-flat' )[ 0 ] ).toBeDefined();
       } );
    } );
 
@@ -142,8 +126,7 @@ describe( 'A laxar-messages-widget', () => {
 
       it( 'shows the appropriate list types for the variant (R1.2)', () => {
          publishDidValidateEvents( [ data.cssClassTestEvent ] );
-         const [ messagesElement ] = dom( '[data-ng-switch-when="byLevel"]' );
-         expect( messagesElement.getAttribute( 'data-ng-switch-when' ) ).toEqual( 'byLevel' );
+         expect( dom( 'div > .ax-local-list' )[ 0 ] ).toBeDefined();
       } );
    } );
 
@@ -154,8 +137,7 @@ describe( 'A laxar-messages-widget', () => {
 
       it( 'shows the appropriate list types for the variant (R1.2)', () => {
          publishDidValidateEvents( [ data.cssClassTestEvent ] );
-         const [ messagesElement ] = dom( '[data-ng-switch-when="separate"]' );
-         expect( messagesElement.getAttribute( 'data-ng-switch-when' ) ).toEqual( 'separate' );
+         expect( dom( '.ax-local-separate' )[ 0 ] ).toBeDefined();
       } );
    } );
 
@@ -165,7 +147,7 @@ describe( 'A laxar-messages-widget', () => {
 
       describe( 'when messages were received', () => {
 
-         createSetup( { resource: { list: [ 'pet', 'beverage', 'car' ] } } );
+         createSetup( { layout: { variant: 1 }, resource: { list: [ 'pet', 'beverage', 'car' ] } } );
 
          beforeEach( () => {
             publishDidValidateEvents( data.simpleMessages.car );
@@ -175,21 +157,15 @@ describe( 'A laxar-messages-widget', () => {
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         it( 'puts these messages into a single view list (R1.6)', () => {
-            expect( widgetScope.model.messagesForView.length ).toBe( 5 );
-         } );
-
-         /////////////////////////////////////////////////////////////////////////////////////////////////////
-
          it( 'sorts the messages by configured resources and for each resource by sortKey (R1.7)', () => {
-            const viewMessages = widgetScope.model.messagesForView;
+            const viewMessages = dom( 'li' ).map( _ => _.innerHTML );
 
             expect( viewMessages.length ).toBe( 5 );
-            expect( viewMessages[ 0 ].htmlText ).toEqual( 'No hamster' );
-            expect( viewMessages[ 1 ].htmlText ).toEqual( 'Hamster is hungry' );
-            expect( viewMessages[ 2 ].htmlText ).toEqual( 'Too expensive' );
-            expect( viewMessages[ 3 ].htmlText ).toEqual( 'Strange color' );
-            expect( viewMessages[ 4 ].htmlText ).toEqual( 'Wrong car' );
+            expect( viewMessages[ 0 ] ).toEqual( 'No hamster' );
+            expect( viewMessages[ 1 ] ).toEqual( 'Hamster is hungry' );
+            expect( viewMessages[ 2 ] ).toEqual( 'Too expensive' );
+            expect( viewMessages[ 3 ] ).toEqual( 'Strange color' );
+            expect( viewMessages[ 4 ] ).toEqual( 'Wrong car' );
          } );
       } );
 
@@ -197,7 +173,7 @@ describe( 'A laxar-messages-widget', () => {
 
       describe( 'when multiple messages with same text are received', () => {
 
-         createSetup( { resource: { list: [ 'car', 'beverage', 'car2', 'beverage2' ] } } );
+         createSetup( { layout: { variant: 1 }, resource: { list: [ 'car', 'beverage', 'car2', 'beverage2' ] } } );
 
          beforeEach( () => {
             publishDidValidateEvents( data.simpleMessages.car );
@@ -208,17 +184,16 @@ describe( 'A laxar-messages-widget', () => {
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         // eslint-disable-next-line max-len
          it( 'those messages are merged using the highest level at the first position the message occurred (R1.8, R1.9)', () => {
-            const viewMessages = widgetScope.model.messagesForView;
+            const viewMessages = dom( 'li' ).map( _ => ({ className: _.className, html: _.innerHTML }) );
 
             expect( viewMessages.length ).toBe( 3 );
-            expect( viewMessages[ 0 ].htmlText ).toEqual( 'Strange color' );
-            expect( viewMessages[ 0 ].level ).toEqual( 'ERROR' );
-            expect( viewMessages[ 1 ].htmlText ).toEqual( 'Wrong car' );
-            expect( viewMessages[ 1 ].level ).toEqual( 'ERROR' );
-            expect( viewMessages[ 2 ].htmlText ).toEqual( 'Too expensive' );
-            expect( viewMessages[ 2 ].level ).toEqual( 'WARNING' );
+            expect( viewMessages[ 0 ].html ).toEqual( 'Strange color' );
+            expect( viewMessages[ 0 ].className ).toEqual( 'alert alert-danger' );
+            expect( viewMessages[ 1 ].html ).toEqual( 'Wrong car' );
+            expect( viewMessages[ 1 ].className ).toEqual( 'alert alert-danger' );
+            expect( viewMessages[ 2 ].html ).toEqual( 'Too expensive' );
+            expect( viewMessages[ 2 ].className ).toEqual( 'alert alert-warning' );
          } );
       } );
 
@@ -244,7 +219,7 @@ describe( 'A laxar-messages-widget', () => {
 
          it( 'there is no visible button to dismiss a message (R2.1)', () => {
             const [ hideButton ] = dom( 'button' );
-            expect( hideButton.classList ).toContain( 'ng-hide' );
+            expect( hideButton ).toBeUndefined();
          } );
       } );
 
@@ -310,20 +285,12 @@ describe( 'A laxar-messages-widget', () => {
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         it( 'all messages can be deleted together (R2.3)', () => {
-            expect( widgetScope.model.messagesForView.length ).toBe( 3 );
-            widgetScope.actions.hideAllMessages();
-            expect( widgetScope.model.messagesForView.length ).toBe( 0 );
-         } );
-
-         /////////////////////////////////////////////////////////////////////////////////////////////////////
-
          it( 'there is only one visible dismiss button deleting all messages (R2.3)', () => {
             const [ hideButton ] = dom( 'button' );
 
-            expect( widgetScope.model.messagesForView.length ).toBe( 3 );
+            expect( dom( 'li' ).length ).toBe( 3 );
             hideButton.click();
-            expect( widgetScope.model.messagesForView.length ).toBe( 0 );
+            expect( dom( 'li' ).length ).toBe( 0 );
          } );
       } );
 
@@ -345,13 +312,12 @@ describe( 'A laxar-messages-widget', () => {
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'each message receives a visible dismiss button (R2.3)', () => {
-            expect( dom( '.alert:not(.ng-hide) button.close' ).length ).toBe( 2 );
-            expect( widgetScope.model.messagesForView.length ).toBe( 3 );
+            expect( dom( 'button.close' ).length ).toBe( 2 );
+            expect( dom( 'li' ).length ).toBe( 3 );
             dom( '.alert-danger button.close' )[ 0 ].click();
-            widgetScope.$apply();
-            expect( widgetScope.model.messagesForView.length ).toBe( 2 );
+            expect( dom( 'li' ).length ).toBe( 2 );
             dom( '.alert-warning button.close' )[ 0 ].click();
-            expect( widgetScope.model.messagesForView.length ).toBe( 0 );
+            expect( dom( 'li' ).length ).toBe( 0 );
          } );
       } );
 
@@ -376,13 +342,13 @@ describe( 'A laxar-messages-widget', () => {
             const hideButtons = dom( 'button' );
 
             expect( hideButtons.length ).toBe( 3 );
-            expect( widgetScope.model.messagesForView.length ).toBe( 3 );
+            expect( dom( 'button + div' ).length ).toBe( 3 );
             hideButtons[ 0 ].click();
-            expect( widgetScope.model.messagesForView.length ).toBe( 2 );
+            expect( dom( 'button + div' ).length ).toBe( 2 );
             hideButtons[ 1 ].click();
-            expect( widgetScope.model.messagesForView.length ).toBe( 1 );
+            expect( dom( 'button + div' ).length ).toBe( 1 );
             hideButtons[ 2 ].click();
-            expect( widgetScope.model.messagesForView.length ).toBe( 0 );
+            expect( dom( 'button + div' ).length ).toBe( 0 );
          } );
       } );
 
@@ -399,9 +365,7 @@ describe( 'A laxar-messages-widget', () => {
          beforeEach( () => {
             publishDidValidateEvents( data.simpleMessages.pet );
 
-            widgetScope.$apply( () => {
-               widgetScope.actions.hideMessagesByLevel( 'ERROR' );
-            } );
+            dom( '.alert-danger button' )[ 0 ].click();
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -428,14 +392,14 @@ describe( 'A laxar-messages-widget', () => {
          beforeEach( () => {
             publishDidValidateEvents( data.simpleMessages.beverage );
 
-            widgetScope.actions.hideMessage( widgetScope.model.messagesForView[ 0 ] );
+            dom( 'button' )[ 0 ].click();
             publishDidValidateEvents( data.simpleMessages.car );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'those will be displayed (R2.5)', () => {
-            const messages = dom( '[data-ng-bind-html="message.htmlText"]' ).map( _ => _.innerText );
+            const messages = dom( 'button + div' ).map( _ => _.innerText );
 
             expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.en_US );
             expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.en_US );
@@ -444,7 +408,7 @@ describe( 'A laxar-messages-widget', () => {
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'dismissed will remain hidden (R2.5)', () => {
-            const messages = dom( '[data-ng-bind-html="message.htmlText"]' ).map( _ => _.innerText );
+            const messages = dom( 'button + div' ).map( _ => _.innerText );
 
             expect( messages ).not.toContain( data.simpleMessages.beverage[ 0 ].data[ 0 ].htmlMessage.en_US );
          } );
@@ -460,7 +424,7 @@ describe( 'A laxar-messages-widget', () => {
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'they will be displayed again (R2.5)', () => {
-               const messages = dom( '[data-ng-bind-html="message.htmlText"]' ).map( _ => _.innerText );
+               const messages = dom( 'button + div' ).map( _ => _.innerText );
 
                expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.en_US );
                expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.en_US );
@@ -511,7 +475,6 @@ describe( 'A laxar-messages-widget', () => {
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      // eslint-disable-next-line max-len
       it( 'sends a state flag for the highest level (ERROR) using the configured flag name (R4.1, R4.2, R4.3)', () => {
          publishDidValidateEvents( data.allLevelEvents.slice( 0 ) );
 
@@ -523,7 +486,6 @@ describe( 'A laxar-messages-widget', () => {
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      // eslint-disable-next-line max-len
       it( 'sends a state flag for the highest level (WARNING) using the configured flag name (R4.1, R4.2, R4.3)', () => {
          publishDidValidateEvents( data.allLevelEvents.slice( 1 ) );
 
@@ -535,7 +497,6 @@ describe( 'A laxar-messages-widget', () => {
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      // eslint-disable-next-line max-len
       it( 'sends a state flag for the highest level (INFO) using the configured flag name (R4.1, R4.2, R4.3)', () => {
          publishDidValidateEvents( data.allLevelEvents.slice( 2 ) );
 
@@ -548,7 +509,6 @@ describe( 'A laxar-messages-widget', () => {
 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      // eslint-disable-next-line max-len
       it( 'sends a state flag for the highest level (SUCCESS) using the configured flag name (R4.1, R4.2, R4.3)', () => {
          publishDidValidateEvents( data.allLevelEvents.slice( 3 ) );
 
@@ -598,7 +558,7 @@ describe( 'A laxar-messages-widget', () => {
       it( 'sets state to BLANK and deletes all messages if a configured action is triggered (R4.5)', () => {
          publishDidValidateEvents( data.allLevelEvents.slice( 0 ) );
 
-         expect( widgetScope.model.messagesForView.length ).toBe( 4 );
+         expect( dom( 'li' ).length ).toBe( 4 );
 
          expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-ERROR.true', {
             flag: 'status-ERROR',
@@ -610,17 +570,11 @@ describe( 'A laxar-messages-widget', () => {
          } );
          testEventBus.flush();
 
-         expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'willTakeAction.resetMessages', {
-            action: 'resetMessages'
-         } );
          expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didChangeFlag.status-BLANK.true', {
             flag: 'status-BLANK',
             state: true
          } );
-         expect( widgetEventBus.publish ).toHaveBeenCalledWith( 'didTakeAction.resetMessages', {
-            action: 'resetMessages'
-         } );
-         expect( widgetScope.model.messagesForView.length ).toBe( 0 );
+         expect( dom( 'li' ).length ).toBe( 0 );
       } );
    } );
 
@@ -676,76 +630,40 @@ describe( 'A laxar-messages-widget', () => {
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
-            it( 'all messages are inserted into the respective lists (R5.3, R5.6)', () => {
-               expect( widgetScope.model.messages.car )
-                  .toEqual( data.simpleMessages.car[ 0 ].data );
-               expect( widgetScope.model.messages.pet )
-                  .toEqual( [
-                     data.simpleMessages.pet[ 0 ].data[ 0 ],
-                     data.simpleMessages.pet[ 1 ].data[ 0 ]
-                  ] );
-               expect( widgetScope.model.messages.beverage )
-                  .toEqual( data.simpleMessages.beverage[ 0 ].data );
-            } );
-
-            //////////////////////////////////////////////////////////////////////////////////////////////////
-
             it( 'messages are deleted again for didReplace of a certain resource (R5.4)', () => {
+               expect( dom( 'li' ).length ).toBe( 5 );
                testEventBus.publish( 'didReplace.pet', { resource: 'pet', data: {} } );
                testEventBus.publish( 'didReplace.beverage', { resource: 'beverage', data: {} } );
                testEventBus.flush();
 
-               expect( widgetScope.model.messages.car ).toEqual( data.simpleMessages.car[ 0 ].data );
-               expect( widgetScope.model.messages.pet ).toEqual( [] );
-               expect( widgetScope.model.messages.beverage ).toEqual( [] );
-
-               expect( widgetScope.model.messagesForView.length ).toBe( 2 );
+               expect( dom( 'li' ).length ).toBe( 2 );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'messages are deleted again for validateRequest of a certain resource (R5.4)', () => {
+               expect( dom( 'li' ).length ).toBe( 5 );
                testEventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
                testEventBus.publish( 'validateRequest.beverage', { resource: 'beverage' } );
                testEventBus.flush();
 
-               expect( widgetScope.model.messages.car ).toEqual( data.simpleMessages.car[ 0 ].data );
-               expect( widgetScope.model.messages.pet ).toEqual( [] );
-               expect( widgetScope.model.messages.beverage ).toEqual( [] );
-
-               expect( widgetScope.model.messagesForView.length ).toBe( 2 );
+               expect( dom( 'li' ).length ).toBe( 2 );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
-            // eslint-disable-next-line max-len
             it( 'messages for sub-topics are deleted on validateRequest of a super-topic resource (R5.5)', () => {
+               expect( dom( 'li' ).length ).toBe( 5 );
+
                publishDidValidateEvents( data.subMessages[ 'pet-health' ] );
                testEventBus.flush();
-               expect( widgetScope.model.messages[ 'pet-health' ] )
-                  .toEqual( data.subMessages[ 'pet-health' ][ 0 ].data );
-               expect( widgetScope.model.messagesForView.length ).toBe( 6 );
+               expect( dom( 'li' ).length ).toBe( 6 );
 
                testEventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
                testEventBus.flush();
-               expect( widgetScope.model.messages[ 'pet-health' ] ).toEqual( [] );
-               expect( widgetScope.model.messagesForView.length ).toBe( 3 );
+               expect( dom( 'li' ).length ).toBe( 3 );
             } );
 
-            //////////////////////////////////////////////////////////////////////////////////////////////////
-
-            // eslint-disable-next-line max-len
-            it( 'messages are not deleted again for SUCCESS message of a certain resource (replace is false) (R5.9)', () => {
-               publishDidValidateEvents( data.simpleMessages.car3 );
-
-               const carMessages = [
-                  ...data.simpleMessages.car[ 0 ].data,
-                  ...data.simpleMessages.car3[ 0 ].data
-               ];
-
-               expect( widgetScope.model.messages.car ).toEqual( carMessages );
-               expect( widgetScope.model.messagesForView.length ).toBe( 6 );
-            } );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -763,20 +681,19 @@ describe( 'A laxar-messages-widget', () => {
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'messages of excluded resources are not inserted into the respective lists (R5.7)', () => {
-               expect( widgetScope.model.messages.car ).toBeUndefined();
-               expect( widgetScope.model.messages.pet ).toBeUndefined();
-               expect( widgetScope.model.messages.beverage )
-                  .toEqual( data.simpleMessages.beverage[ 0 ].data );
+               const messages = dom( 'li > span' ).map( _ => _.innerHTML );
+
+               expect( messages.length ).toBe( 1 );
+               expect( messages[ 0 ] ).toEqual( data.simpleMessages.beverage[ 0 ].data[ 0 ].htmlMessage.en_US );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
-            // eslint-disable-next-line max-len
             it( 'messages of resources that are subtopics of excluded resources are not inserted into the respective lists (R5.8)', () => {
-               expect( widgetScope.model.messages.car ).toBeUndefined();
-               expect( widgetScope.model.messages.pet ).toBeUndefined();
-               expect( widgetScope.model.messages.beverage )
-                  .toEqual( data.simpleMessages.beverage[ 0 ].data );
+               const messages = dom( 'li > span' ).map( _ => _.innerHTML );
+
+               expect( messages.length ).toBe( 1 );
+               expect( messages[ 0 ] ).toEqual( data.simpleMessages.beverage[ 0 ].data[ 0 ].htmlMessage.en_US );
             } );
 
          } );
@@ -800,13 +717,11 @@ describe( 'A laxar-messages-widget', () => {
                ///////////////////////////////////////////////////////////////////////////////////////////////
 
                it( 'messages are deleted again for SUCCESS message of a certain resource (R5.9)', () => {
-
                   publishDidValidateEvents( data.simpleMessages.car3 );
 
-                  expect( widgetScope.model.messages.car )
-                     .toEqual( data.simpleMessages.car3[ 0 ].data );
-
-                  expect( widgetScope.model.messagesForView.length ).toBe( 4 );
+                  const messages = dom( 'li > span' ).map( _ => _.innerHTML );
+                  expect( messages[ 0 ] ).toEqual( data.simpleMessages.car3[ 0 ].data[ 0 ].htmlMessage.en_US );
+                  expect( messages.length ).toBe( 4 );
 
                } );
             } );
@@ -841,38 +756,22 @@ describe( 'A laxar-messages-widget', () => {
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
-            it( 'relevant messages are inserted into the respective lists (R5.3, R5.6)', () => {
-               expect( widgetScope.model.messages.car ).toEqual( data.simpleMessages.car[ 0 ].data );
-               expect( widgetScope.model.messages.pet ).toEqual( [
-                  data.simpleMessages.pet[ 0 ].data[ 0 ],
-                  data.simpleMessages.pet[ 1 ].data[ 0 ]
-               ] );
-               expect( widgetScope.model.messages.beverage ).toBeUndefined();
-            } );
-
-            //////////////////////////////////////////////////////////////////////////////////////////////////
-
             it( 'messages are deleted again for didReplace of a certain resource (R5.4)', () => {
+               expect( dom( 'li' ).length ).toBe( 4 );
                testEventBus.publish( 'didReplace.pet', { resource: 'pet', data: {} } );
                testEventBus.flush();
 
-               expect( widgetScope.model.messages.car ).toEqual( data.simpleMessages.car[ 0 ].data );
-               expect( widgetScope.model.messages.pet ).toEqual( [] );
-               expect( widgetScope.model.messages.beverage ).toBeUndefined();
-
-               expect( widgetScope.model.messagesForView.length ).toBe( 2 );
+               expect( dom( 'li' ).length ).toBe( 2 );
             } );
 
             //////////////////////////////////////////////////////////////////////////////////////////////////
 
             it( 'messages are deleted again for validateRequest of a certain resource (R5.4)', () => {
+               expect( dom( 'li' ).length ).toBe( 4 );
                testEventBus.publish( 'validateRequest.pet', { resource: 'pet' } );
                testEventBus.flush();
 
-               expect( widgetScope.model.messages.car ).toEqual( data.simpleMessages.car[ 0 ].data );
-               expect( widgetScope.model.messages.pet ).toEqual( [] );
-
-               expect( widgetScope.model.messagesForView.length ).toBe( 2 );
+               expect( dom( 'li' ).length ).toBe( 2 );
             } );
          } );
       } );
@@ -893,16 +792,18 @@ describe( 'A laxar-messages-widget', () => {
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'messages of excluded resources are not inserted into the respective lists (R5.7)', () => {
-            expect( widgetScope.model.messages.car )
-               .toEqual( data.simpleMessages.car[ 0 ].data );
-            expect( widgetScope.model.messages.pet ).toBeUndefined();
-            expect( widgetScope.model.messages.beverage ).toBeUndefined();
+            const messages = dom( 'li > span' ).map( _ => _.innerHTML );
+            expect( messages.length ).toBe( 2 );
+            expect( messages[ 0 ] )
+               .toEqual( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.en_US );
+            expect( messages[ 1 ] )
+               .toEqual( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.en_US );
          } );
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
          it( 'sub-resources of excluded resources are not inserted into the respective lists (R5.8)', () => {
-            expect( widgetScope.model.messages[ 'pet-health' ] ).toBeUndefined();
+            expect( dom( 'li' ).length ).toBe( 2 );
          } );
       } );
    } );
@@ -931,13 +832,10 @@ describe( 'A laxar-messages-widget', () => {
 
          /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-         // eslint-disable-next-line max-len
          it( 'the treats the events as validation messages of outcome ERROR of a special resource (R6.1, R6.3)', () => {
-            expect( widgetScope.model.messages._DID_ENCOUNTER_ERROR_RESOURCE ).toEqual( [ {
-               level: 'ERROR',
-               htmlMessage: 'There was an error',
-               sortKey: '000'
-            } ] );
+            const messages = dom( 'li > span' ).map( _ => _.innerHTML );
+            expect( messages.length ).toBe( 1 );
+            expect( messages[ 0 ] ).toEqual( 'There was an error' );
          } );
       } );
 
@@ -977,7 +875,7 @@ describe( 'A laxar-messages-widget', () => {
       ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
       it( 'updates the message as the locale changes (R7.1)', () => {
-         let messages = dom( '[data-ng-bind-html="message.htmlText"]' ).map( _ => _.innerText );
+         let messages = dom( 'button + div' ).map( _ => _.innerText );
          expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.en_US );
          expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.en_US );
 
@@ -986,9 +884,8 @@ describe( 'A laxar-messages-widget', () => {
             languageTag: 'de_DE'
          } );
          testEventBus.flush();
-         widgetScope.$root.$digest();
 
-         messages = dom( '[data-ng-bind-html="message.htmlText"]' ).map( _ => _.innerText );
+         messages = dom( 'button + div' ).map( _ => _.innerText );
          expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 0 ].htmlMessage.de_DE );
          expect( messages ).toContain( data.simpleMessages.car[ 0 ].data[ 1 ].htmlMessage.de_DE );
       } );
@@ -999,9 +896,8 @@ describe( 'A laxar-messages-widget', () => {
    function publishDidValidateEvents( events ) {
       events.forEach( event => {
          testEventBus.publish( `didValidate.${event.resource}`, event );
-         testEventBus.flush();
       } );
-      widgetScope.$root.$digest();
+      testEventBus.flush();
    }
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////

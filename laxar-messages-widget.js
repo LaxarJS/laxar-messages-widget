@@ -3,13 +3,10 @@
  * Released under the MIT license.
  * http://laxarjs.org/license
  */
-import * as ng from 'angular';
-import 'angular-sanitize';
-import { object } from 'laxar';
-import { flags } from 'laxar-patterns';
+import { assert, object } from 'laxar';
+import { actions, flags } from 'laxar-patterns';
 
 const DID_ENCOUNTER_ERROR_RESOURCE = '_DID_ENCOUNTER_ERROR_RESOURCE';
-const EVENT_SCROLL_TO_MESSAGES = 'axMessagesWidget.scrollToMessages';
 
 const levelMap = {
    BLANK: { weight: 0 },
@@ -25,61 +22,66 @@ const layoutVariants = {
    4: 'separate'
 };
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Controller.$inject = [ '$scope', 'axFeatures', 'axI18n' ];
-
-function Controller( $scope, features, i18n ) {
+export const injections = [ 'axContext', 'axEventBus', 'axFeatures', 'axI18n', 'axWithDom' ];
+export function create( context, eventBus, features, i18n, withDom ) {
 
    i18n.whenLocaleChanged( rebuildMessagesForView );
 
    let resourceOrder = [];
    let currentStatus = null;
-   const resources = features.resource.list;
-   const exclusions = features.resource.exclude;
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   $scope.model = {
-      levelMap,
+   const model = {
       messageViewType: layoutVariants[ features.layout.variant ],
       messages: {},
       messagesForView: [],
       messagesForViewByLevel: {}
    };
 
-   $scope.actions = {
+   const commands = {
       hideMessagesByLevel( level ) {
-         $scope.model.messagesForViewByLevel[ level ].forEach( $scope.actions.hideMessage );
-         // update messages by level
+         model.messagesForViewByLevel[ level ].forEach( commands.hideMessage );
          rebuildMessagesForView();
       },
       hideAllMessages() {
          // We need to make a copy here, as we otherwise are in conflict with the in-place modifications of
-         // $scope.model.hideMessage
-         $scope.model.messagesForView.slice( 0 ).forEach( $scope.actions.hideMessage );
+         // commands.hideMessage
+         [ ...model.messagesForView ].forEach( commands.hideMessage );
+         render();
       },
       hideMessage( message ) {
-         const index = $scope.model.messagesForView.indexOf( message );
+         const index = model.messagesForView.indexOf( message );
          if( index !== -1 ) {
             message.sourceMessages.forEach( sourceMessage => {
                sourceMessage.dismissed = true;
             } );
-            $scope.model.messagesForView.splice( index, 1 );
+            model.messagesForView.splice( index, 1 );
          }
+         render();
       }
    };
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-   if( Array.isArray( resources ) ) {
-      if( resources.length === 0 ) {
-         $scope.eventBus.subscribe( 'didValidate', insertMessagesForEvent );
+   actions.handlerFor( context ).registerActionsFromFeature( 'status.reset', () => {
+      changeLevelStatus( 'BLANK' );
+      model.messages = {};
+      rebuildMessagesForView();
+      recalculateCurrentStatus();
+   } );
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+   if( Array.isArray( features.resource.list ) ) {
+      if( features.resource.list.length === 0 ) {
+         eventBus.subscribe( 'didValidate', insertMessagesForEvent );
       }
       else {
-         resourceOrder = resources.slice( 0 );
-         resources.forEach( resource => {
-            $scope.eventBus.subscribe( `didValidate.${resource}`, insertMessagesForEvent );
+         resourceOrder = [ ...features.resource.list ];
+         features.resource.list.forEach( resource => {
+            eventBus.subscribe( `didValidate.${resource}`, insertMessagesForEvent );
          } );
       }
    }
@@ -87,7 +89,7 @@ function Controller( $scope, features, i18n ) {
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    if( features.errors.enabled ) {
-      $scope.eventBus.subscribe( 'didEncounterError', event => {
+      eventBus.subscribe( 'didEncounterError', event => {
          insertMessagesForEvent( {
             resource: DID_ENCOUNTER_ERROR_RESOURCE,
             data: [ {
@@ -98,36 +100,19 @@ function Controller( $scope, features, i18n ) {
       } );
    }
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-   if( features.status.reset && features.status.reset.onActions ) {
-      const actions = features.status.reset.onActions;
-
-      actions.forEach( action => {
-         $scope.eventBus.subscribe( `takeActionRequest.${action}`, event => {
-            $scope.eventBus.publish( `willTakeAction.${event.action}`, {
-               action: event.action
-            } );
-            changeLevelStatus( 'BLANK' );
-            $scope.model.messages = {};
-            rebuildMessagesForView();
-            recalculateCurrentStatus();
-            $scope.eventBus.publish( `didTakeAction.${event.action}`, {
-               action: event.action
-            } );
-         } );
-      } );
-   }
-
-   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
    changeLevelStatus( 'BLANK' );
+
+   return {
+      onDomAvailable() {
+         withDom( render );
+      }
+   };
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    function insertMessagesForEvent( event ) {
       const topic = event.resource;
-      if( exclusions && exclusions.some( isSuperTopicOf( topic ) ) ) {
+      if( features.resource.exclude && features.resource.exclude.some( isSuperTopicOf( topic ) ) ) {
          return;
       }
 
@@ -138,12 +123,12 @@ function Controller( $scope, features, i18n ) {
       }
 
       if( features.resource.replace && event.outcome === 'SUCCESS' ) {
-         if( $scope.model.messages[ topic ] ) {
-            $scope.model.messages[ topic ].length = 0;
+         if( model.messages[ topic ] ) {
+            model.messages[ topic ].length = 0;
          }
       }
 
-      const messageBucket = $scope.model.messages;
+      const messageBucket = model.messages;
       if( !Array.isArray( messageBucket[ topic ] ) ) {
          messageBucket[ topic ] = [];
          if( resourceOrder.indexOf( topic ) === -1 ) {
@@ -177,10 +162,9 @@ function Controller( $scope, features, i18n ) {
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    function clearMessagesOn( eventName, topic ) {
-      const unsubscribe = $scope.eventBus.subscribe( eventName, () => {
-         const messageBucket = $scope.model.messages;
-         if( Array.isArray( messageBucket[ topic ] ) ) {
-            messageBucket[ topic ].length = 0;
+      const unsubscribe = eventBus.subscribe( eventName, () => {
+         if( Array.isArray( model.messages[ topic ] ) ) {
+            model.messages[ topic ].length = 0;
             rebuildMessagesForView();
             recalculateCurrentStatus();
          }
@@ -191,16 +175,14 @@ function Controller( $scope, features, i18n ) {
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
    function rebuildMessagesForView() {
-      const model = $scope.model;
       const messagesForView = [];
       const textToPosition = {};
 
       resourceOrder.forEach( resource => {
-         const resourceMessages = object.path( model.messages, resource, [] ).slice( 0 );
+         const resourceMessages = [ ...object.path( model.messages, resource, [] ) ];
 
          // eslint-disable-next-line no-nested-ternary
          resourceMessages.sort( ( a, b ) => a.sortKey < b.sortKey ? -1 : ( a.sortKey > b.sortKey ? 1 : 0 ) );
-
          resourceMessages.forEach( message => {
             if( message.dismissed ) {
                return;
@@ -225,16 +207,130 @@ function Controller( $scope, features, i18n ) {
          } );
       } );
 
-      $scope.model.messagesForView = messagesForView;
+      model.messagesForView = messagesForView;
 
       if( model.messageViewType === 'byLevel' ) {
          const messagesForViewByLevel = {};
-         Object.keys( model.levelMap ).forEach( level => {
+         Object.keys( levelMap ).forEach( level => {
             messagesForViewByLevel[ level ] = messagesForView.filter( message => message.level === level );
          } );
          model.messagesForViewByLevel = messagesForViewByLevel;
       }
+
+      render();
       scrollWidgetIntoView();
+   }
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+   function render() {
+      withDom( element => {
+         element.innerHTML = '';
+         if( model.messagesForView.length <= 0 ) {
+            return;
+         }
+
+         let layoutElement;
+         switch( model.messageViewType ) {
+            case 'list': {
+               layoutElement = document.createElement( 'ul' );
+               layoutElement.className = 'ax-local-list ax-local-flat-list ax-local-without-frame';
+               model.messagesForView.forEach( message => {
+                  const listItem = document.createElement( 'li' );
+                  listItem.className = message.cssClass;
+                  listItem.innerHTML = message.htmlText;
+                  layoutElement.appendChild( listItem );
+               } );
+               break;
+            }
+
+            case 'flat': {
+               layoutElement = document.createElement( 'div' );
+               layoutElement.className = 'alert ax-local-flat';
+               if( features.dismiss.enabled ) {
+                  const dismissButton = document.createElement( 'button' );
+                  dismissButton.type = 'button';
+                  dismissButton.className = 'close';
+                  dismissButton.addEventListener( 'click', commands.hideAllMessages, false );
+                  layoutElement.appendChild( dismissButton );
+               }
+
+               const listNode = document.createElement( 'ul' );
+               listNode.className = 'ax-local-list ax-local-flat-list';
+               layoutElement.appendChild( listNode );
+
+               model.messagesForView.forEach( message => {
+                  const listItem = document.createElement( 'li' );
+                  listItem.className = message.cssClass;
+                  listItem.innerHTML = message.htmlText;
+                  listNode.appendChild( listItem );
+               } );
+               break;
+            }
+
+            case 'byLevel': {
+               layoutElement = document.createElement( 'div' );
+               Object.keys( levelMap ).forEach( level => {
+                  if( model.messagesForViewByLevel[ level ].length <= 0 ) {
+                     return;
+                  }
+
+                  const levelInfo = levelMap[ level ];
+                  const levelWrapper = document.createElement( 'div' );
+                  levelWrapper.className = levelInfo.cssClass;
+                  layoutElement.appendChild( levelWrapper );
+
+                  const dismissButton = document.createElement( 'button' );
+                  dismissButton.type = 'button';
+                  dismissButton.className = 'close';
+                  dismissButton.addEventListener(
+                     'click', commands.hideMessagesByLevel.bind( null, level ), false
+                  );
+                  levelWrapper.appendChild( dismissButton );
+
+                  const listNode = document.createElement( 'ul' );
+                  listNode.className = 'ax-local-list';
+                  levelWrapper.appendChild( listNode );
+
+                  model.messagesForViewByLevel[ level ].forEach( message => {
+                     const listItem = document.createElement( 'li' );
+                     listItem.innerHTML = `<span>${message.htmlText}</span>`;
+                     listNode.appendChild( listItem );
+                  } );
+               } );
+               break;
+            }
+
+            case 'separate': {
+               layoutElement = document.createElement( 'div' );
+               layoutElement.className = 'ax-local-separate';
+               model.messagesForView.forEach( message => {
+                  const item = document.createElement( 'div' );
+                  item.className = message.cssClass;
+                  layoutElement.appendChild( item );
+
+                  const dismissButton = document.createElement( 'button' );
+                  dismissButton.type = 'button';
+                  dismissButton.className = 'close';
+                  dismissButton.addEventListener(
+                     'click', commands.hideMessage.bind( null, message ), false
+                  );
+                  item.appendChild( dismissButton );
+
+                  const messageWrapper = document.createElement( 'div' );
+                  messageWrapper.innerHTML = message.htmlText;
+                  item.appendChild( messageWrapper );
+               } );
+               break;
+            }
+
+            default:
+               assert.codeIsUnreachable( `Unsupported message view type "${model.messageViewType}".` );
+               return;
+         }
+
+         element.appendChild( layoutElement );
+      } );
    }
 
    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -252,8 +348,8 @@ function Controller( $scope, features, i18n ) {
 
    function recalculateCurrentStatus() {
       let newStatus = 'BLANK';
-      Object.keys( $scope.model.messages ).forEach( resource => {
-         $scope.model.messages[ resource ].forEach( message => {
+      Object.keys( model.messages ).forEach( resource => {
+         model.messages[ resource ].forEach( message => {
             if( levelMap[ message.level ].weight > levelMap[ newStatus ].weight ) {
                newStatus = message.level;
             }
@@ -268,10 +364,10 @@ function Controller( $scope, features, i18n ) {
       if( newStatus === currentStatus ) { return; }
 
       if( currentStatus != null ) {
-         flags.publisherForFeature( $scope, `status.${currentStatus}`, { optional: true } )( false );
+         flags.publisherForFeature( context, `status.${currentStatus}`, { optional: true } )( false );
       }
 
-      flags.publisherForFeature( $scope, `status.${newStatus}`, { optional: true } )( true );
+      flags.publisherForFeature( context, `status.${newStatus}`, { optional: true } )( true );
       currentStatus = newStatus;
    }
 
@@ -281,33 +377,11 @@ function Controller( $scope, features, i18n ) {
       if( !features.autoScroll.enabled ) {
          return;
       }
-      // in case the are no messages yet, we set a timeout to ensure that the directive
-      // axMessagesAutoScroll has registered to the event and is not still blocked by the ngIf
+
       setTimeout( () => {
-         $scope.$broadcast( EVENT_SCROLL_TO_MESSAGES );
+         withDom( element => {
+            element.scrollIntoView( true );
+         } );
       }, 0 );
    }
 }
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const autoScrollDirectiveName = 'axMessagesAutoScroll';
-const autoScrollDirective = [ () => {
-   return {
-      link( $scope, $element ) {
-         if( $scope.features.autoScroll.enabled ) {
-            $scope.$on( EVENT_SCROLL_TO_MESSAGES, () => {
-               setTimeout( () => {
-                  $element[ 0 ].scrollIntoView( true );
-               }, 0 );
-            } );
-         }
-      }
-   };
-} ];
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const name = ng.module( 'axMessagesWidget', [ 'ngSanitize' ] )
-   .controller( 'AxMessagesWidgetController', Controller )
-   .directive( autoScrollDirectiveName, autoScrollDirective ).name;
