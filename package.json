@@ -27,7 +27,7 @@
     "eslint": "^3.17.1",
     "eslint-config-laxarjs": "^2.0.0",
     "html-loader": "^0.4.5",
-    "karma": "^1.5.0",
+    "karma": "^6.3.14",
     "laxar": "^2.0.0",
     "laxar-patterns": "^2.0.0",
     "laxar-uikit": "^2.0.0",
